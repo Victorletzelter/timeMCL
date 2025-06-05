@@ -1,0 +1,7 @@
+torch>=1.8
+numpy>=1.19
+scipy>=1.5
+scikit-learn>=0.24
+matplotlib>=3.3
+jupyter>=1.0
+rootutils==1.0.7 

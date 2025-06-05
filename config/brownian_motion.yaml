@@ -1,0 +1,11 @@
+dataset_name: "brownian_motion"
+nb_discretization_points: 500
+batch_size: 4096
+nb_step_simulation: 250
+device: "cuda"
+t_condition: 0.5
+wta_mode: "relaxed_wta"
+cond_dim: 1
+n_hypotheses: 10
+num_steps: 500
+learning_rate: 0.001

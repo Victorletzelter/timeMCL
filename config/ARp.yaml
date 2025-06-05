@@ -1,0 +1,14 @@
+dataset_name: "ARp"
+nb_discretization_points: 500
+batch_size: 4096
+p: 5
+nb_step_simulation: 245 # 250 - p
+coefficients: [0.4, 0.2, 0.2, 0.1, 0.1]
+sigma: 0.06
+device: "cuda"
+t_condition: 100
+wta_mode: "relaxed_wta"
+cond_dim: 5 # p
+n_hypotheses: 10
+num_steps: 500
+learning_rate: 0.001
