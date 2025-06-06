@@ -1,6 +1,6 @@
-# Code for *Winner-Takes-All for Multivariate Probabilistic Time Series Forecasting* (ICML 2024)
+# Code for *Winner-Takes-All for Multivariate Probabilistic Time Series Forecasting* (ICML 2025)
 
-This repository contains the source code associated to the publication *Winner-Takes-All for Multivariate Probabilistic Time Series Forecasting*, to appear at ICML 2024. 
+This repository contains the source code associated to the publication *Winner-Takes-All for Multivariate Probabilistic Time Series Forecasting*, to appear at ICML 2025. 
 
 <div align="center"> <h3> Abstract </h3>  </div>
 <div align="justify">
