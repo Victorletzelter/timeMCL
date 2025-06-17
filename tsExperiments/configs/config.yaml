@@ -1,0 +1,60 @@
+# @package _global_
+
+run_name: my_run_name
+
+# configs/config.yaml
+defaults:
+  - data: default
+  - trainer: default
+  - model: timeMCL
+  - callbacks: default
+  - logger: many_loggers.yaml # set logger here or use command line (e.g. `python train.py logger=tensorboard`)
+  - paths: default
+  - extras: default
+  - hydra: default
+  - _self_
+  # - experiment: default
+  - experiment: electricity.yaml
+
+   # config for hyperparameter optimization
+  - hparams_search: null
+
+  # optional local config for machine/user specific settings
+  # it's optional since it doesn't need to exist and is excluded from version control
+  - optional local: default
+
+  # debugging config (enable through command line, e.g. `python train.py debug=default)
+  - debug: null
+
+# task name, determines output directory path
+task_name: "train"
+
+# tags to help you identify your experiments
+# you can overwrite this in experiment configs
+# overwrite from command line with `python train.py tags="[first_tag, second_tag]"`
+tags: ["dev"]
+
+# set False to skip model training
+train: True
+
+# evaluate on test set, using best model weights achieved during training
+# lightning chooses best weights based on the metric specified in checkpoint callback
+test: False
+
+# simply provide checkpoint path to resume training
+ckpt_path: null
+
+# related to tactis2
+ckpt_path_phase1: null
+ckpt_path_phase2: null
+
+compute_usual_metrics: True
+
+visualize_specific_date: False
+  
+seed: 42
+
+start_date_viz: "2024-12-05"
+end_date_viz: "2025-03-01"
+# date_of_pred: "2024-12-20"
+date_of_pred: "2025-01-04"

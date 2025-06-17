@@ -1,0 +1,49 @@
+# configs/model/timeMCL.yaml
+name: timeMCL
+compute_flops: False
+compute_target_assignement: True
+plot_forecasts: True
+params:
+  beta: 1.0
+  num_hypotheses: 4
+  mcl_hidden_dim: 300
+  num_layers: 2
+  num_cells: 40
+  cell_type: "LSTM"
+  num_parallel_samples: 100
+  dropout_rate: 0.1
+  embedding_dimension: 0
+  conditioning_length: 100
+  loss_type: "l2"
+  residual_layers: 8
+  residual_channels: 8
+  dilation_cycle_length: 2
+  scaling: True
+  pick_incomplete: False
+  time_features: Null
+  mcl_loss_type: "min_ext_sum" 
+  num_feat_dynamic_real: ${data.train.num_feat_dynamic_real}
+  score_loss_weight: 0.5
+  wta_mode: "wta"
+  wta_mode_params:
+    epsilon: Null
+    temperature_ini: 10
+    temperature: ${model.params.wta_mode_params.temperature_ini}
+    scheduler_mode: "exponential"
+    temperature_decay: 0.95
+    temperature_lim: 5e-4
+    wta_after_temperature_lim: True
+  optim_kwargs:
+    lr: 1e-3
+    weight_decay: 1e-8
+    patience: 10
+  sample_hyps: True
+  single_linear_layer: True
+  backbone_deleted: True
+  scaler_type: "mean"
+  div_by_std: False
+  minimum_std: 1e-3
+  minimum_std_cst: 1e-4
+  default_scale: False
+  default_scale_cst: False
+  add_minimum_std: False

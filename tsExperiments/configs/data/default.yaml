@@ -1,0 +1,18 @@
+num_batches_per_epoch: 30
+num_batches_val_per_epoch: 100
+batch_size: 200
+shuffle_buffer_length: Null
+
+train:
+  type: "Gluonts_ds"
+  dataset_name: "electricity_nips"
+  num_feat_dynamic_real: 4
+
+eval:
+  type: "Gluonts_ds"
+  dataset_name: "electricity_nips"
+  num_feat_dynamic_real: 4
+
+load_from_csv: false
+load_from_csv_path: Null
+

@@ -1,0 +1,61 @@
+# configs/model/tactis2.yaml
+name: tactis2
+compute_flops: False
+compute_target_assignement: True
+plot_forecasts: True
+params:
+  beta: 1.0
+  num_hypotheses: 1
+  model_parameters:   #following hyperparameters are those used in the benchmark for fred_md (from tactis)
+    flow_series_embedding_dim: 5
+    copula_series_embedding_dim: 5
+    flow_input_encoder_layers: 2
+    copula_input_encoder_layers: 2
+    input_encoding_normalization: True
+    data_normalization: "standardization"
+    loss_normalization: "series"
+    bagging_size: 8 
+    positional_encoding:
+      dropout: 0.0
+    flow_temporal_encoder:
+      attention_layers: 2
+      attention_heads: 1
+      attention_dim: 16
+      attention_feedforward_dim: 16
+      dropout: 0.0
+    copula_temporal_encoder:
+      attention_layers: 2
+      attention_heads: 1
+      attention_dim: 16
+      attention_feedforward_dim: 16
+      dropout: 0.0
+    copula_decoder:
+      min_u: 0.05
+      max_u: 0.95
+      attentional_copula: 
+        attention_heads: 3
+        attention_layers: 1
+        attention_dim: 8
+        mlp_layers: 2
+        mlp_dim: 48
+        resolution: 20
+        activation_function: "relu"
+      dsf_marginal: 
+        mlp_layers: 2
+        mlp_dim: 48
+        flow_layers: 2
+        flow_hid_dim: 8
+  nb_epoch_phase_1: 20
+  cdf_normalization: False
+  num_parallel_samples: 1
+  optim_kwargs:
+    lr: 1e-3
+    weight_decay: 1e-8
+    patience: 10
+
+
+
+
+
+
+ 

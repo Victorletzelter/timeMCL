@@ -1,0 +1,8 @@
+# configs/trainer/default.yaml
+max_epochs: 200
+# gpus: 1          # 0 pour CPU, 1 ou plus pour GPU
+accelerator: "gpu"
+# precision: 32    # 32 pour full precision, 16 pour half precision
+gradient_clip_val: 10.0
+validation_only: false
+#is_tactis: false

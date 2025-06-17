@@ -1,0 +1,38 @@
+# configs/model/timeGrad.yaml
+name: timeGrad
+compute_flops: False
+compute_target_assignement: True
+plot_forecasts: True
+params:
+  beta: 1.0
+  num_hypotheses: 4
+  shuffle_buffer_length: Null
+  num_layers: 2
+  num_cells: 40
+  cell_type: "LSTM"
+  num_parallel_samples: 100
+  dropout_rate: 0.1
+  embedding_dimension: 0
+  conditioning_length: 100
+  diff_steps: 100
+  loss_type: "l2"
+  beta_end: 0.1
+  beta_schedule: "linear"
+  residual_layers: 8
+  residual_channels: 8
+  dilation_cycle_length: 2
+  scaling: True
+  pick_incomplete: False
+  time_features: Null
+  num_feat_dynamic_real: ${data.train.num_feat_dynamic_real}
+  optim_kwargs:
+    lr: 1e-3
+    weight_decay: 1e-8
+    patience: 10
+  scaler_type: "mean"
+  div_by_std: False
+  minimum_std: 1e-3
+  minimum_std_cst: 1e-4
+  default_scale: False
+  default_scale_cst: False
+  add_minimum_std: False

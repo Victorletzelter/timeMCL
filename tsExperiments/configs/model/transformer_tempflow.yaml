@@ -1,0 +1,37 @@
+# configs/model/transformer_tempflow.yaml
+name: transformer_tempflow
+compute_flops: False
+plot_forecasts: True
+params:
+  beta: 1.0
+  d_model: 32
+  dim_feedforward_scale: 4
+  act_type: "gelu"
+  num_heads: 8
+  num_encoder_layers: 3
+  num_decoder_layers: 3
+  num_hypotheses: 4
+  num_parallel_samples: 100
+  dropout_rate: 0.1
+  embedding_dimension: 0
+  flow_type: "RealNVP"
+  n_blocks: 3
+  hidden_size: 100
+  n_hidden: 2
+  dequantize: False
+  scaling: True
+  pick_incomplete: False
+  conditioning_length: 100
+  num_feat_dynamic_real: ${data.train.num_feat_dynamic_real}
+  optim_kwargs:
+    lr: 1e-3
+    weight_decay: 1e-8
+    patience: 10
+  scaler_type: "mean"
+  div_by_std: False
+  minimum_std: 1e-3
+  minimum_std_cst: 1e-4
+  default_scale: False
+  default_scale_cst: False
+  add_minimum_std: False
+

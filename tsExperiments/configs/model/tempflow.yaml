@@ -1,0 +1,39 @@
+# configs/model/tempflow.yaml
+name: tempflow
+compute_flops: False
+plot_forecasts: True
+params:
+  beta: 1.0
+  # freq: "1H" #freq of the data, overriden by the metadata
+  # prediction_length: 30 #overriden by the metadata
+  num_hypotheses: 4
+  # target_dim: 2 #overriden by the metadata
+  # context_length: 70 #overriden by the metadata
+  num_layers: 2
+  num_cells: 40
+  cell_type: "LSTM"
+  num_parallel_samples: 100
+  dropout_rate: 0.1
+  # cardinality: [1]
+  embedding_dimension: 0
+  flow_type: "RealNVP"
+  n_blocks: 3
+  hidden_size: 100
+  n_hidden: 2
+  dequantize: False
+  scaling: True
+  pick_incomplete: False
+  time_features: Null
+  conditioning_length: 100
+  num_feat_dynamic_real: ${data.train.num_feat_dynamic_real}
+  optim_kwargs:
+    lr: 1e-3
+    weight_decay: 1e-8
+    patience: 10
+  scaler_type: "mean"
+  div_by_std: False
+  minimum_std: 1e-3
+  minimum_std_cst: 1e-4
+  default_scale: False
+  default_scale_cst: False
+  add_minimum_std: False

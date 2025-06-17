@@ -1,0 +1,31 @@
+# @package _global_
+
+# to execute this experiment run:
+# python train.py experiment=example
+
+# all parameters below will be merged with parameters from default configurations set above
+# this allows you to overwrite only specified parameters
+
+data:
+  num_batches_per_epoch: 30
+  num_batches_val_per_epoch: 100
+  batch_size: 200
+  shuffle_buffer_length: Null
+
+  train:
+    type: "Gluonts_ds"
+    split_train_val: true
+    n_pred_steps_val: 10 # number of step of validation (as a factor of the prediction length)
+    dataset_name: "electricity_nips"
+    num_feat_dynamic_real: 4
+
+  eval:
+    type: "Gluonts_ds"
+    dataset_name: "electricity_nips"
+    num_feat_dynamic_real: 4
+
+run_name: "electricity_nips"
+
+logger:
+  mlflow:
+    experiment_name: "electricity_nips"
