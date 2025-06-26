@@ -16,6 +16,10 @@ We introduce **TimeMCL**, a method leveraging the Multiple Choice Learning (MCL)
 └── tsExperiments # Code for reproducing the experiments with real world datasets
 ```
 
+## Fast demo
+
+For fast prototyping, we provide a notebook in `demo/TimeMCL-Solar.ipynb` for training, inference, evaluation and plotting.
+
 ## Synthetic data experiments
 
 This part of the code focuses on **toy experiments** with synthetic data. These toy experiments help illustrate the *TimeMCL* model's underlying theory and demonstrate, on controlled examples, how *TimeMCL* acts as a functional quantizer of stochastic processes.
