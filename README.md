@@ -18,7 +18,7 @@ We introduce **TimeMCL**, a method leveraging the Multiple Choice Learning (MCL)
 
 ## Fast demo
 
-For fast prototyping, we provide a notebook in `demo/TimeMCL-Solar.ipynb` for training, inference, evaluation and plotting.
+For fast prototyping, we provide a notebook in [TimeMCL-Solar](demo/TimeMCL-Solar.ipynb) for training, inference, evaluation and plotting. 
 
 ## Synthetic data experiments
 

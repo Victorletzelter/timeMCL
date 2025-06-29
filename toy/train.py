@@ -43,7 +43,7 @@ model = tMCL(
 )
 
 if dataset_name == "ARp":
-    additional_params = {"p": p, "coefficients": coefficients, "sigma": sigma}
+    additional_params = {"p": p, "coefficients": coefficients, "sigma": sigma,"init_values": None}
 else:
     additional_params = {}
 
