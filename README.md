@@ -5,20 +5,21 @@ This repository contains the source code associated with the publication *Winner
 <div align="center"> <h3> Abstract </h3>  </div>
 <div align="justify">
 
-We introduce **TimeMCL**, a method leveraging the Multiple Choice Learning (MCL) paradigm to forecast multiple plausible time series futures. Our approach employs a neural network with multiple heads and utilizes the Winner-Takes-All (WTA) loss to promote diversity among predictions. MCL has recently gained attention due to its simplicity and ability to address ill-posed and ambiguous tasks. We propose an adaptation of this framework for time-series forecasting, presenting it as an efficient method to predict diverse futures, which we relate to its implicit \textit{quantization} objective. We provide insights into our approach using synthetic data and evaluate it on real-world time series, demonstrating its promising performance at a light computational cost.
+We introduce **TimeMCL**, a method leveraging the Multiple Choice Learning (MCL) paradigm to forecast multiple plausible time series futures. Our approach employs a neural network with multiple heads and utilizes the Winner-Takes-All (WTA) loss to promote diversity among predictions. MCL has recently gained attention due to its simplicity and ability to address ill-posed and ambiguous tasks. We propose an adaptation of this framework for time-series forecasting, presenting it as an efficient method to predict diverse futures, which we relate to its implicit *quantization* objective. We provide insights into our approach using synthetic data and evaluate it on real-world time series, demonstrating its promising performance at a light computational cost.
 
 </br>
 
 ## Repository Structure
 
 ```shell
+└── demo # Notebooks for fast demos
 └── toy # Code for reproducing the experiments with synthetic data
 └── tsExperiments # Code for reproducing the experiments with real world datasets
 ```
 
 ## Fast demo
 
-For fast prototyping, we provide a notebook in `demo/TimeMCL-Solar.ipynb` for training, inference, evaluation and plotting.
+For quick prototyping, we provide a notebook in [TimeMCL-Solar.ipynb](demo/TimeMCL-Solar.ipynb) for training, inference, evaluation and plotting on real-world time series. A similar demonstration for synthetic data experiments is available in [toy.ipynb](demo/toy.ipynb).
 
 ## Synthetic data experiments
 
@@ -52,14 +53,16 @@ cd toy
 pip install -r requirements.txt
 ```
 
+LaTeX can optionally be used for plot rendering. It can be installed with: `sudo apt-get install -y dvipng texlive-latex-extra texlive-fonts-recommended cm-super`.
+
 ### Training and inference
 
 For training TimeMCL on the synthetic datasets, run:
 
 ```shell
-python train.py --config=config/ARp.yaml
-python train.py --config=config/brownian_motion.yaml
-python train.py --config=config/brownian_bridge.yaml
+python train.py ARp.yaml
+python train.py brownian_motion.yaml
+python train.py brownian_bridge.yaml
 ```
 
 Checkpoints will be stored in `toy/logs/trained_timeMCL_{dataset_name}.pth`.

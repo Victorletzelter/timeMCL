@@ -8,7 +8,8 @@ from toy import (
     plot_brownien,
     plot_ARp_quantization,
     tMCL,
-)  # Ensure tMCL is imported
+    is_usetex_available,
+)
 from matplotlib import rc
 import argparse
 import pickle
@@ -79,7 +80,7 @@ def main(seed):
 
     # %%
 
-    rc("text", usetex=True)
+    rc("text", usetex=True if is_usetex_available() else False)
     rc("font", family="serif")
 
     # Load the trained models

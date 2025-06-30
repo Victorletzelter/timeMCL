@@ -2,18 +2,18 @@ import numpy as np
 import torch
 import matplotlib.pyplot as plt
 import numpy as np
-import matplotlib.pyplot as plt
 from itertools import product
 from scipy.stats import norm
 import numpy as np
 import torch
-import matplotlib.pyplot as plt
 import torch
 import torch.optim as optim
 from sklearn.cluster import KMeans
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from matplotlib import rc
+import tempfile
 
 
 class StochasticProcessSampler:
@@ -406,7 +406,6 @@ def plot_brownian_bridge(
     T = t_condition + interval_length / nb_discretization_points
     num_steps = nb_discretization_points
     t_full = np.linspace(0, T, num_steps)
-
     dt = T / len(t_full)
     W = np.cumsum(np.sqrt(dt) * np.random.randn(len(t_full)))
     W = np.insert(W, 0, 0)[:-1]
@@ -463,6 +462,7 @@ def plot_brownian_bridge(
             color="brown",
             alpha=0.8,
             linewidth=2.5,
+            label="Target quantization",
         )
 
     for trajectory in predictions_neural:
@@ -473,6 +473,7 @@ def plot_brownian_bridge(
             alpha=0.8,
             linewidth=3,
             color="lightcoral",
+            label="Predictions",
         )
 
     ax.set_title(
@@ -752,10 +753,11 @@ def plot_ARp_quantization(
             alpha=0.8,
             linewidth=2.5,
             color="brown",
+            label="Target quantization"
         )
 
     for trajectory in predictions_neural:
-        ax.plot(time_future, trajectory, color="lightcoral", alpha=0.8, linewidth=3)
+        ax.plot(time_future, trajectory, color="lightcoral", alpha=0.8, linewidth=3, label="Predictions")
 
     ax.set_title(f"Quantization and WTA of AR(p) process from t={t_condition}")
     ax.set_xlabel("Time")
@@ -770,3 +772,16 @@ def plot_ARp_quantization(
         "kmeans_centroids": kmeans_centroids,
         "predictions_neural": predictions_neural,
     }
+
+
+def is_usetex_available():
+    try:
+        rc("text", usetex=True)
+        with tempfile.NamedTemporaryFile(suffix=".pdf", delete=True) as f:
+            plt.figure()
+            plt.plot([0, 1], [0, 1])
+            plt.savefig(f.name)  # Try rendering with LaTeX
+            plt.close()
+        return True
+    except Exception as e:
+        return False
