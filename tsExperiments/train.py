@@ -26,13 +26,13 @@ from tsExperiments.models.project_models.tempflow.tempFlow_estimator import (
     TempFlowEstimator,
 )
 from tsExperiments.utils.logging_utils import LoggerManager
+from tsExperiments.utils.utils import compute_metric_forecast
 from gluonts.evaluation.backtest import make_evaluation_predictions
 from gluonts.dataset.repository import get_dataset
 from gluonts.dataset.multivariate_grouper import MultivariateGrouper
 from tsExperiments.models.project_models.tMCL.personnalized_evaluator import (
     MultivariateEvaluator,
 )
-from tsExperiments.new_metrics import compute_metric_forecast
 from utils import (
     RankedLogger,
     instantiate_callbacks,
