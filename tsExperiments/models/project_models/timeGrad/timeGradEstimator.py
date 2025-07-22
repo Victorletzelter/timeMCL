@@ -39,12 +39,9 @@ from gluonts.dataset.multivariate_grouper import MultivariateGrouper
 from gluonts.dataset.repository import get_dataset
 import torch.nn as nn
 from tsExperiments.models.project_models.timeGrad.lighting_grad import timeGrad
-from tsExperiments.utils.utils import lags_for_fourier_time_features_from_frequency
+from tsExperiments.utils.utils import fourier_time_features_from_frequency, lags_for_fourier_time_features_from_frequency
 from tsExperiments.Estimator import PyTorchLightningEstimator
 from gluonts.time_feature import TimeFeature
-from tsExperiments.models.project_models.timeGrad.data_preprocessing import (
-    fourier_time_features_from_frequency,
-)
 from gluonts.dataset.loader import as_stacked_batches
 from gluonts.dataset.common import Dataset
 from gluonts.itertools import Cyclic

@@ -12,41 +12,6 @@ from inspect import isfunction
 
 import numpy as np
 
-
-def weighted_average(
-    x: torch.Tensor, weights: Optional[torch.Tensor] = None, dim=None
-) -> torch.Tensor:
-    """
-    Computes the weighted average of a given tensor across a given dim, masking
-    values associated with weight zero,
-    meaning instead of `nan * 0 = nan` you will get `0 * 0 = 0`.
-
-    Parameters
-    ----------
-    x
-        Input tensor, of which the average must be computed.
-    weights
-        Weights tensor, of the same shape as `x`.
-    dim
-        The dim along which to average `x`
-
-    Returns
-    -------
-    Tensor:
-        The tensor with values averaged along the specified `dim`.
-    """
-    if weights is not None:
-        weighted_tensor = torch.where(weights != 0, x * weights, torch.zeros_like(x))
-        sum_weights = torch.clamp(
-            weights.sum(dim=dim) if dim else weights.sum(), min=1.0
-        )
-        return (
-            weighted_tensor.sum(dim=dim) if dim else weighted_tensor.sum()
-        ) / sum_weights
-    else:
-        return x.mean(dim=dim)
-
-
 class DiffusionEmbedding(nn.Module):
     def __init__(self, dim, proj_dim, max_steps=500):
         super().__init__()

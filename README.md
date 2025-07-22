@@ -99,8 +99,8 @@ source $ENV_DIR/bin/activate
 To train timeMCL with 16 hypotheses on all the datasets `('electricity' 'exchange' 'solar' 'taxi' 'traffic' 'wiki')` with seed 3141, with annealed and relaxed variants (with default parameters), use the following commands:
 
 ```shell
-bash train.sh 3141 all 16 timeMCL awta # For the annealed variant
-bash train.sh 3141 all 16 timeMCL relaxed-wta # For the relaxed variant
+bash train.sh 3141 all timeMCL 16 awta # For the annealed variant
+bash train.sh 3141 all timeMCL 16 relaxed-wta # For the relaxed variant
 ```
 
 To train the different baselines, on all the datasets with seed 3141 use the following commands:

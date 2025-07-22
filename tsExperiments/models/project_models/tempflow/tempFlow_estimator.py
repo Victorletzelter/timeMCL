@@ -33,9 +33,7 @@ from gluonts.transform import (
 )
 import numpy as np
 from typing import List, Dict, Any, Iterable
-from tsExperiments.models.project_models.timeGrad.data_preprocessing import (
-    fourier_time_features_from_frequency,
-)
+from tsExperiments.utils.utils import fourier_time_features_from_frequency, lags_for_fourier_time_features_from_frequency
 from tsExperiments.models.project_models.tempflow.lighting_grad import TempFlowLighting
 
 from tsExperiments.Estimator import PyTorchLightningEstimator
@@ -311,28 +309,3 @@ class TempFlowEstimator(PyTorchLightningEstimator):
             prediction_length=self.prediction_length,
             device="auto",
         )
-
-
-def lags_for_fourier_time_features_from_frequency(
-    freq_str: str, num_lags: Optional[int] = None
-) -> List[int]:
-    offset = to_offset(freq_str)
-    multiple, granularity = offset.n, offset.name
-
-    if granularity == "M":
-        lags = [[1, 12]]
-    elif granularity == "D":
-        lags = [[1, 7, 14]]
-    elif granularity == "B":
-        lags = [[1, 2]]
-    elif granularity == "H":
-        lags = [[1, 24, 168]]
-    elif granularity in ("T", "min"):
-        lags = [[1, 4, 12, 24, 48]]
-    else:
-        lags = [[1]]
-
-    # use less lags
-    output_lags = list([int(lag) for sub_list in lags for lag in sub_list])
-    output_lags = sorted(list(set(output_lags)))
-    return output_lags[:num_lags]

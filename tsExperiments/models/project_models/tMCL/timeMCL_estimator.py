@@ -21,20 +21,10 @@ import rootutils
 # Setup project root
 rootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
 sys.path.append(os.path.dirname(os.environ["PROJECT_ROOT"]))
-from tsExperiments.plottimeMCL import plot_mcl
-from gluonts.dataset.repository import get_dataset
-from tsExperiments.models.project_models.tMCL.personnalized_evaluator import (
-    MultivariateEvaluator,
-)
-from gluonts.dataset.multivariate_grouper import MultivariateGrouper
 from gluonts.core.component import validated
 from gluonts.dataset.common import Dataset, DataEntry
 from gluonts.dataset.field_names import FieldName
 from gluonts.dataset.loader import DataLoader, as_stacked_batches
-from tsExperiments.models.project_models.tMCL.personnalized_evaluator import (
-    MultivariateEvaluator,
-)  # our custom evaluator.
-from gluonts.evaluation.backtest import make_evaluation_predictions
 from gluonts.itertools import Cyclic, select
 from gluonts.model.forecast import Forecast, SampleForecast
 from gluonts.model.forecast_generator import ForecastGenerator, to_numpy
@@ -56,12 +46,9 @@ from gluonts.transform import (
     VstackFeatures,
 )
 
-from tsExperiments.utils.utils import lags_for_fourier_time_features_from_frequency
+from tsExperiments.utils.utils import fourier_time_features_from_frequency, lags_for_fourier_time_features_from_frequency
 from tsExperiments.models.project_models.tMCL.lighting_grad import timeMCL_lighting
 from tsExperiments.Estimator import PyTorchLightningEstimator
-from tsExperiments.models.project_models.tMCL.data_preprocessing import (
-    fourier_time_features_from_frequency,
-)
 
 from utils import RankedLogger
 
@@ -116,7 +103,7 @@ class Custom_MCL_SampleForecastGenerator(ForecastGenerator):
             scores_mean = np.mean(scores, axis=2)  # (B,K)
             scores_normalized = scores_mean / np.sum(scores_mean, axis=1, keepdims=True)
 
-            if self.sample_hyps is True:
+            if self.sample_hyps is True: # This allows to resample the hypotheses accounting for the predicted scores. This is a computational trick to approximate the metrics without having to re-code the metrics from scratch.
                 N = 1000  # the nb of samples we want by resampling with the hyps.
                 B, K = scores_normalized.shape  # Batches et hypothèses
                 outputs = outputs[:, :, :, :-1]  # (B,K,T,dim_ts)
@@ -375,7 +362,6 @@ class timeMCL_estimator(PyTorchLightningEstimator):
             num_batches_per_epoch=self.num_batches_val_per_epoch,
         )
 
-    # simple/validated
     def create_training_data_loader(self, data: Dataset, module, **kwargs) -> Iterable:
         data = Cyclic(data).stream()
         instances = self._create_instance_splitter(module, "training").apply(
@@ -444,29 +430,21 @@ class timeMCL_estimator(PyTorchLightningEstimator):
 
 def distorsion(target: np.ndarray, forecast: np.ndarray) -> float:
     r"""
-    .. math::
+    Distortion, also referred to as the Oracle or Quantization error in the literature (Pages & Printems, 2009; Lee et al., 2016;
+    Perera et al., 2024) is defined as
+    D_2 \triangleq \frac{1}{N} \sum_{i=1}^N \min_{k \in\{1, \ldots, K\}} \sqrt{\sum_{d=1}^D \frac{1}{T-t_0+1} \sum_{t=t_0}^T\left(x_t^{i, d}-\hat{x}_t^{i, k, d}\right)^2}
+    where N is the number of time series, D is the number of dimensions, T is the prediction length, t_0 is the start of the prediction, and K is the number of hypotheses.
+    It is a measure of quantization error, i.e., whether the model is making a good use of the hypotheses given the target distribution.
 
-        mse = mean((Y - \hat{Y})^2)
-
-    See [HA21]_ for more details.
+    References:
+    - Pages, G. and Printems, J. Optimal quantization for finance: from random vectors to stochastic processes.
+    - Lee, S., Purushwalkam Shiva Prakash, S., Cogswell, M., Ranjan, V., Crandall, D., and Batra, D. Stochastic multiple choice learning for training diverse deep ensembles. In NeurIPS, 2016.
+    - Perera, D., Letzelter, V., Mariotte, T., Cortes, A., Chen, M., Essid, S., and Richard, G. Annealed multiple choice learning: Overcoming limitations of winner-takes-all with annealing. In NeurIPS, 2024.
     """
-    # forecast.samples.shape -> (num_samples,pred_length). we have all our pred for a given target. We want to take the best..
-    # target.data -> (pred_lentgh,)
-
+    # forecast.samples.shape -> (num_samples,pred_length)
+    # target.data -> (pred_length,)
     rmse_values = np.mean(
         (forecast.samples - target.data) ** 2, axis=1
-    )  # to add mse after.
+    )  
     best_mse = np.min(rmse_values)
-
-    return best_mse  # np.mean(np.square(target - mean_fcst)) #we return the best one.
-
-
-def personnalized_mse(target: np.ndarray, forecast: np.ndarray) -> float:
-    r"""
-    .. math::
-
-        mse = mean((Y - \hat{Y})^2)
-
-    See [HA21]_ for more details.
-    """
-    return np.mean(np.square(target - forecast))
+    return best_mse

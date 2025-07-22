@@ -51,11 +51,8 @@ from tsExperiments.models.project_models.deepAR.lighting_grad import LightingDee
 
 from tsExperiments.Estimator import PyTorchLightningEstimator
 from distribution_output import LowRankMultivariateNormalOutput
-from tsExperiments.utils.utils import lags_for_fourier_time_features_from_frequency
+from tsExperiments.utils.utils import fourier_time_features_from_frequency, lags_for_fourier_time_features_from_frequency
 from gluonts.time_feature import TimeFeature
-from tsExperiments.models.project_models.deepAR.data_preprocessing import (
-    fourier_time_features_from_frequency,
-)
 from gluonts.dataset.loader import as_stacked_batches
 from gluonts.dataset.common import Dataset
 from gluonts.itertools import Cyclic
