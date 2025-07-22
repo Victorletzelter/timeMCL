@@ -7,8 +7,8 @@ from tsExperiments.models.project_models.timeGrad.utils import (
     GaussianDiffusion,
     DiffusionOutput,
     EpsilonTheta,
-    weighted_average,
 )
+from tsExperiments.utils.utils import weighted_average
 from data_and_transformation import (
     MeanScaler,
     NOPScaler,

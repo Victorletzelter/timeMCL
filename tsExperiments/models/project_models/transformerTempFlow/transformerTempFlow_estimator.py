@@ -14,9 +14,7 @@ from gluonts.core.component import validated
 from gluonts.dataset.field_names import FieldName
 from gluonts.time_feature import TimeFeature
 from gluonts.torch.model.predictor import PyTorchPredictor
-from tsExperiments.models.project_models.timeGrad.data_preprocessing import (
-    fourier_time_features_from_frequency,
-)
+from tsExperiments.utils.utils import fourier_time_features_from_frequency,lags_for_fourier_time_features_from_frequency
 from gluonts.torch.model.predictor import PyTorchPredictor
 from gluonts.transform import (
     Transformation,
@@ -34,24 +32,14 @@ from gluonts.transform import (
     SetFieldIfNotPresent,
     TargetDimIndicator,
 )
-from gluonts.evaluation.backtest import make_evaluation_predictions
-import numpy as np
-from gluonts.evaluation import MultivariateEvaluator
-from gluonts.dataset.repository import get_dataset
-from gluonts.dataset.multivariate_grouper import MultivariateGrouper
 from typing import List, Dict, Any, Iterable
-from tsExperiments.models.project_models.timeGrad.data_preprocessing import (
-    fourier_time_features_from_frequency,
-)
 from tsExperiments.models.project_models.transformerTempFlow.lighting_grad import (
     TransTempFlowLighting,
 )
-
 from tsExperiments.Estimator import PyTorchLightningEstimator
 from gluonts.dataset.loader import as_stacked_batches
 from gluonts.dataset.common import Dataset
 from gluonts.itertools import Cyclic
-from pandas.tseries.frequencies import to_offset
 
 
 class TransformerTempFlowEstimator(PyTorchLightningEstimator):
@@ -344,28 +332,3 @@ class TransformerTempFlowEstimator(PyTorchLightningEstimator):
             prediction_length=self.prediction_length,
             device="auto",
         )
-
-
-def lags_for_fourier_time_features_from_frequency(
-    freq_str: str, num_lags: Optional[int] = None
-) -> List[int]:
-    offset = to_offset(freq_str)
-    multiple, granularity = offset.n, offset.name
-
-    if granularity == "M":
-        lags = [[1, 12]]
-    elif granularity == "D":
-        lags = [[1, 7, 14]]
-    elif granularity == "B":
-        lags = [[1, 2]]
-    elif granularity == "H":
-        lags = [[1, 24, 168]]
-    elif granularity in ("T", "min"):
-        lags = [[1, 4, 12, 24, 48]]
-    else:
-        lags = [[1]]
-
-    # use less lags
-    output_lags = list([int(lag) for sub_list in lags for lag in sub_list])
-    output_lags = sorted(list(set(output_lags)))
-    return output_lags[:num_lags]

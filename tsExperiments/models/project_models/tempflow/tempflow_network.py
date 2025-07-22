@@ -16,7 +16,7 @@ from data_and_transformation import (
     MeanStdScaler,
 )
 import torch.nn as nn
-from tsExperiments.models.project_models.timeGrad.utils import weighted_average
+from tsExperiments.utils.utils import weighted_average
 from gluonts.model import Input, InputSpec
 
 

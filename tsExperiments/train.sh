@@ -1,6 +1,7 @@
 #!/bin/bash
 declare -a num_hyps=('1')
 max_epochs=200
+scaler_type="mean"
 
 if [ $# -ge 1 ]; then
     seed=$1

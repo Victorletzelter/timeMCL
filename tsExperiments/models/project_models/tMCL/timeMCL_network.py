@@ -14,9 +14,9 @@ import torch.nn as nn
 from typing import List, Optional, Union, Tuple
 from tsExperiments.models.project_models.tMCL.utils import (
     MCLOutput,
-    weighted_average,
-    tMCL,
+    tMCL
 )
+from tsExperiments.utils.utils import weighted_average
 from tsExperiments.data_and_transformation import (
     MeanScaler,
     NOPScaler,
@@ -323,14 +323,6 @@ class timeMCLNetwork(nn.Module):
         # unroll encoder
         outputs, state = self.rnn(inputs, begin_state)
 
-        # assert_shape(outputs, (-1, unroll_length, self.num_cells))
-        # for s in state:
-        #     assert_shape(s, (-1, self.num_cells))
-
-        # assert_shape(
-        #     lags_scaled, (-1, unroll_length, self.target_dim, len(self.lags_seq)),
-        # )
-
         return outputs, state, lags_scaled, inputs
 
     def unroll_encoder(
@@ -468,40 +460,7 @@ class timeMCLNetwork(nn.Module):
         """
         (distr_args,) = self.proj_dist_args(rnn_outputs)
 
-        # # compute likelihood of target given the predicted parameters
-        # distr = self.distr_output.distribution(distr_args, scale=scale)
-
-        # return distr, distr_args
         return distr_args
-
-    def distribution_noise(
-        self,
-        rnn_outputs: torch.Tensor,
-        scale: torch.Tensor,
-    ):
-        """
-        Returns the distribution of DeepVAR with respect to the RNN outputs.
-
-        Parameters
-        ----------
-        rnn_outputs
-            Outputs of the unrolled RNN (batch_size, seq_len, num_cells)
-        scale
-            Mean scale for each time series (batch_size, 1, target_dim)
-
-        Returns
-        -------
-        distr
-            Distribution instance
-        distr_args
-            Distribution arguments
-        """
-        distr_args = self.proj_distr_noise(rnn_outputs)
-
-        # compute likelihood of target given the predicted parameters
-        distr = self.distr_noise.distribution(distr_args, scale=scale)
-
-        return distr, distr_args
 
     def loss(
         self,
@@ -515,7 +474,7 @@ class timeMCLNetwork(nn.Module):
         future_observed_values: torch.Tensor,
     ) -> Tuple[torch.Tensor, ...]:
         """
-        Computes the loss for training DeepVAR, all inputs tensors representing
+        Computes the loss for training TimeMCL, all inputs tensors representing
         time series have NTC layout.
 
         Parameters
@@ -554,9 +513,6 @@ class timeMCLNetwork(nn.Module):
             Distribution arguments (context + prediction_length,
             number_of_arguments)
         """
-
-        seq_len = self.context_length + self.prediction_length
-
         # unroll the decoder in "training mode", i.e. by providing future data
         # as well
         rnn_outputs, _, scale_params, _, _ = self.unroll_encoder(
@@ -607,7 +563,7 @@ class timeMCLNetwork(nn.Module):
 
         loss = weighted_average(
             likelihoods, weights=loss_weights, dim=1
-        )  # + weighted_average(likelihoods_noise, weights=loss_weights, dim=1) i.e. we do not want to fit the noise here.
+        )
 
         return (
             loss.mean(),
@@ -615,7 +571,7 @@ class timeMCLNetwork(nn.Module):
             distr_args,
             target_assignment,
             score_loss,
-        )  # loss
+        )  
 
     def sampling_decoder(
         self,
