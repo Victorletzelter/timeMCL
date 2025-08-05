@@ -1,0 +1,606 @@
+# %% Imports and Setup
+import os
+import pandas as pd
+import numpy as np
+import sys
+import warnings
+import rootutils
+
+# Display and warning settings
+warnings.filterwarnings("ignore")
+pd.options.mode.chained_assignment = None
+np.seterr(all="ignore")
+# Add the project root to the path
+rootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
+sys.path.append(os.path.dirname(os.environ["PROJECT_ROOT"]))
+
+# %% Configuration
+datasets_list = ["electricity", "exchange", "solar", "traffic", "taxi", "wiki"]
+num_hypothesis_list = ["16"]
+config_name_list = [
+    "timeGrad",
+    "deepAR",
+    "tempflow",
+    "transformer_tempflow",
+    "tactis2",
+    "MCLrelaxed0.1mean",
+    "aMCL0.95mean",
+]
+# Metric names
+metric_name_rmse = "m_sum_RMSE"
+metric_name_risk = "Distorsion"
+metric_name_CRPS_sum = "m_sum_mean_wQuantileLoss"
+metric_name_tv = "total_variation"
+
+# %% Helper Functions
+def configuration_to_extract(
+    csv_file, config_name, num_hypothesis, keep_single_seed=False
+):
+    """Filter and extract rows from csv_file based on config and hypothesis count."""
+
+    csv_file = csv_file[
+        (csv_file["model/params/num_hypotheses"] == float(num_hypothesis))
+        | (csv_file["model/params/num_hypotheses"] == num_hypothesis)
+    ]
+
+    # Check seeds
+    seed_mask = csv_file["Name"].str.contains(f"seed_{keep_single_seed}_", na=False)
+
+    # Combine both masks
+    if keep_single_seed is not None:
+        csv_file = csv_file[seed_mask]
+
+    if "MCL" in config_name:
+        csv_file = csv_file[
+            (csv_file["model/params/score_loss_weight"] == 0.5)
+            | (csv_file["model/params/score_loss_weight"] == "0.5")
+        ]
+
+    if config_name == "MCLrelaxed0.1mean":
+        csv_file = csv_file[csv_file["model/name"] == "timeMCL"]
+        csv_file = csv_file[csv_file["model/params/scaler_type"] == "mean"]
+        csv_file = csv_file[csv_file["model/params/wta_mode"] == "relaxed-wta"]
+
+    elif config_name == "aMCL0.95mean":
+        csv_file = csv_file[csv_file["model/name"] == "timeMCL"]
+        csv_file = csv_file[csv_file["model/params/wta_mode"] == "awta"]
+
+    elif config_name == "timeGrad":
+        csv_file = csv_file[csv_file["model/name"] == "timeGrad"]
+
+    elif config_name == "deepAR":
+        csv_file = csv_file[csv_file["model/name"] == "deepAR"]
+
+    elif config_name == "tempflow":
+        csv_file = csv_file[csv_file["model/name"] == "tempflow"]
+
+    elif config_name == "transformer_tempflow":
+        csv_file = csv_file[csv_file["model/name"] == "transformer_tempflow"]
+
+    elif config_name == "tactis2":
+        csv_file = csv_file[csv_file["model/name"] == "tactis2"]
+
+    elif config_name == "ETS":
+        csv_file = csv_file[csv_file["model/name"] == "ETS"]
+
+    else:
+        raise ValueError("Invalid config name")
+
+    return csv_file
+
+
+def look_exact_path(path):
+    """Find the exact file path in the directory matching the given path pattern."""
+    csv_dir = "saved_csv"
+    Root_DIR = os.path.dirname(path)
+    for file in os.listdir(Root_DIR):
+        if file.split("_id")[0] == path.split("/" + csv_dir + "/")[-1].split(".csv")[0]:
+            return os.path.join(Root_DIR, file)
+
+
+def set_lowest_and_second_lowest_in_bold_and_underline(df, lower_is_better=True):
+    """Format DataFrame to bold the best and underline the second best values per row."""
+    for index, row in df.iterrows():
+        values = []
+        method_value_map = {}
+        for col in df.columns:
+            cell = row[col]
+            if isinstance(cell, str):
+                try:
+                    value = float(cell.split(" ")[0])
+                    values.append(value)
+                    method_value_map[col] = value
+                except ValueError:
+                    continue
+
+        if not values:
+            continue
+
+        sorted_values = sorted(set(values), reverse=not lower_is_better)
+        best_val = sorted_values[0]
+        second_best_val = sorted_values[1] if len(sorted_values) > 1 else None
+
+        for col in df.columns:
+            cell = row[col]
+            if isinstance(cell, str):
+                try:
+                    value = float(cell.split(" ")[0])
+                    if value == best_val:
+                        df.at[index, col] = f"\\textbf{{{cell}}}"
+                    elif second_best_val is not None and value == second_best_val:
+                        df.at[index, col] = f"\\underline{{{cell}}}"
+                except ValueError:
+                    continue
+
+    return df
+
+
+def resize_table(str_table, dataset_name, metric_name, caption):
+    """Wrap a LaTeX table string with formatting, caption, and label."""
+    mapping_metric_name = {
+        metric_name_CRPS_sum: "CRPS-Sum",
+        metric_name_rmse: "RMSE-Sum",
+        metric_name_risk: "Distortion Risk",
+        metric_name_tv: "TV Score",
+    }
+    metric_name = mapping_metric_name[metric_name]
+
+    if dataset_name is None:
+        label = metric_name
+    elif metric_name is None:
+        label = dataset_name
+    else:
+        label = f"{dataset_name} - {metric_name}"
+
+    # Add a textbf around the caption
+    caption = f"\\textbf{{{caption}}}"
+
+    latex_wrapper = f"""\\begin{{table}}
+    \\begin{{center}}
+    \\caption{{{caption}}}
+    \\label{{tabapx:{label}}}
+    \\resizebox{{2\\columnwidth}}{{!}}{{{str_table}}}
+    \\end{{center}}
+    \\end{{table}}"""
+
+    return latex_wrapper
+
+
+def create_fixed_hypothesis_metric_table(
+    metric_df_dict,
+    metric_name,
+    fixed_num_hypothesis,
+    datasets,
+    methods,
+    insert_vertical_line=False,
+    lower_is_better=False,
+    gray_first_two_columns=False,
+):
+    """Generate a LaTeX table for a metric with a fixed number of hypotheses across datasets and methods."""
+    dataset_to_render = {
+        "electricity": "\\textsc{Elec.}",
+        "exchange": "\\textsc{Exch.}",
+        "solar": "\\textsc{Solar}",
+        "traffic": "\\textsc{Traffic}",
+        "taxi": "\\textsc{Taxi}",
+        "wiki": "\\textsc{Wiki}",
+    }
+    datasets_to_render_dict = {
+        "electricity": "\\textsc{Elec.}",
+        "exchange": "\\textsc{Exch.}",
+        "solar": "\\textsc{Solar}",
+        "traffic": "\\textsc{Traffic}",
+        "taxi": "\\textsc{Taxi}",
+        "wiki": "\\textsc{Wiki}",
+    }
+    methods_to_render_dict = {
+        "ETS": "\\textbf{\\texttt{ETS}}",
+        "timeGrad": "\\textbf{\\texttt{TimeGrad}}",
+        "deepAR": "\\textbf{\\texttt{DeepAR}}",
+        "tempflow": "\\textbf{\\texttt{TempFlow}}",
+        "transformer_tempflow": "\\textbf{\\texttt{Trf.TempFlow}}",
+        "tactis2": "\\textbf{\\texttt{Tactis2}}",
+        "MCLrelaxed0.1mean": "\\textbf{\\texttt{TimeMCL (R.)}}",
+        "aMCL0.95mean": "\\textbf{\\texttt{TimeMCL (A.)}}",
+        "timeMCL_relaxed-wta": "\\textbf{\\texttt{TimeMCL (R.)}}",
+        "timeMCL_awta": "\\textbf{\\texttt{TimeMCL (A.)}}",
+    }
+    datasets_to_render = [dataset_to_render[dataset] for dataset in datasets]
+    methods_to_render = [methods_to_render_dict[method] for method in methods]
+
+    table_data = pd.DataFrame(index=datasets_to_render, columns=methods_to_render)
+
+    for dataset in datasets:
+        for method in methods:
+            try:
+                value = metric_df_dict[dataset].loc[fixed_num_hypothesis, method]
+                if type(value) == str and "nan" in value.split(" $\pm$")[0]:
+                    table_data.at[
+                        datasets_to_render_dict[dataset], methods_to_render_dict[method]
+                    ] = "N/A"
+                else:
+                    table_data.at[
+                        datasets_to_render_dict[dataset], methods_to_render_dict[method]
+                    ] = value
+            except KeyError:
+                table_data.at[
+                    datasets_to_render_dict[dataset], methods_to_render_dict[method]
+                ] = "N/A"
+
+    table_data = set_lowest_and_second_lowest_in_bold_and_underline(
+        table_data, lower_is_better=lower_is_better
+    )
+    latex_table = table_data.to_latex(escape=False, column_format="c" * (len(methods)))
+
+    if insert_vertical_line:
+        my_method = "MCLrelaxed0.1mean"
+        if my_method in methods:
+            method_index = methods.index(my_method)
+            col_format = (
+                "l" + "c" * (method_index) + "||" + "c" * (len(methods) - method_index)
+            )
+            # Match the exact pattern including newline and replace with new format
+            latex_table = latex_table.replace(
+                "\\begin{tabular}{" + "c" * len(methods) + "}\n",
+                "\\begin{tabular}{" + col_format + "}\n",
+            )
+
+    # Add gray coloring to first two columns if requested
+    if gray_first_two_columns:
+        # Split the table into lines
+        lines = latex_table.split("\n")
+        for i, line in enumerate(lines):
+            if "&" in line:  # Only process data rows
+                parts = line.split("&")
+                # Wrap first two columns in \textcolor{gray}{}
+                parts[1] = f"\\textcolor{{gray}}{{{parts[1].strip()}}}"
+                parts[2] = f"\\textcolor{{gray}}{{{parts[2].strip()}}}"
+                parts[3] = f"\\textcolor{{gray}}{{{parts[3].strip()}}}"
+                lines[i] = " & ".join(parts)
+        latex_table = "\n".join(lines)
+
+    # Add arrow to caption based on lower_is_better
+    arrow = "($\\downarrow$)" if lower_is_better else "($\\uparrow$)"
+    caption = (
+        f"{metric_name} {arrow} comparison for $K = {fixed_num_hypothesis}$ hypotheses"
+    )
+
+    return resize_table(
+        latex_table, dataset_name=None, metric_name=metric_name, caption=caption
+    )
+
+
+# %% Initialize DataFrames
+datasets = {}
+df_rmse, df_risk, df_CRPS_sum, df_tv = {}, {}, {}, {}
+
+for dataset_name in datasets_list:
+    df_rmse[dataset_name] = pd.DataFrame(
+        index=num_hypothesis_list, columns=config_name_list
+    )
+    df_risk[dataset_name] = pd.DataFrame(
+        index=num_hypothesis_list, columns=config_name_list
+    )
+    df_CRPS_sum[dataset_name] = pd.DataFrame(
+        index=num_hypothesis_list, columns=config_name_list
+    )
+    df_tv[dataset_name] = pd.DataFrame(
+        index=num_hypothesis_list, columns=config_name_list
+    )
+
+
+def BASE_PATH_generator(dataset_name, config_name):
+    """Generate the base path for results CSV based on dataset and config."""
+    return [
+        f"{os.environ['PROJECT_ROOT']}/tsExperiments/results/saved_csv/eval_{dataset_name}_200.csv"
+    ]
+
+
+def create_single_dataset_table(
+    metric_df_dict,
+    metric_name,
+    dataset_name,
+    methods,
+    num_hypotheses_list,
+    insert_vertical_line=False,
+    gray_first_two_columns=False,
+):
+    """Generate a LaTeX table for a single dataset with varying numbers of hypotheses."""
+    methods_to_render_dict = {
+        "ETS": "\\textbf{\\texttt{ETS}}",
+        "timeGrad": "\\textbf{\\texttt{TimeGrad}}",
+        "deepAR": "\\textbf{\\texttt{DeepAR}}",
+        "tempflow": "\\textbf{\\texttt{TempFlow}}",
+        "transformer_tempflow": "\\textbf{\\texttt{Trf.TempFlow}}",
+        "tactis2": "\\textbf{\\texttt{Tactis2}}",
+        "MCLrelaxed0.1mean": "\\textbf{\\texttt{TimeMCL (R.)}}",
+        "aMCL0.95mean": "\\textbf{\\texttt{TimeMCL (A.)}}",
+    }
+
+    methods_to_render = [methods_to_render_dict[method] for method in methods]
+
+    # Create DataFrame with hypotheses as index and methods as columns
+    table_data = pd.DataFrame(index=num_hypotheses_list, columns=methods_to_render)
+
+    # Fill the table with values
+    for num_hyp in num_hypotheses_list:
+        for method in methods:
+            try:
+                value = metric_df_dict[dataset_name].loc[num_hyp, method]
+                if type(value) == str and "nan" in value.split(" $\pm$")[0]:
+                    table_data.at[num_hyp, methods_to_render_dict[method]] = "N/A"
+                else:
+                    table_data.at[num_hyp, methods_to_render_dict[method]] = value
+            except KeyError:
+                table_data.at[num_hyp, methods_to_render_dict[method]] = "N/A"
+
+    # Format the table
+    table_data = set_lowest_and_second_lowest_in_bold_and_underline(table_data)
+    latex_table = table_data.to_latex(escape=False)
+
+    if insert_vertical_line:
+        my_method = "MCLrelaxed0.1mean"
+        if my_method in methods:
+            method_index = methods.index(my_method) + 1
+            col_format = (
+                "l"
+                + "c" * (method_index - 1)
+                + "|"
+                + "c" * (len(methods) - method_index)
+            )
+            latex_table = latex_table.replace(
+                r"\begin{tabular}{", r"\begin{tabular}{" + col_format + "}"
+            )
+
+    caption = f"{metric_name} Comparison for {dataset_name} Dataset"
+
+    if gray_first_two_columns:
+        # Split the table into lines
+        lines = latex_table.split("\n")
+        for i, line in enumerate(lines):
+            if "&" in line:  # Only process data rows
+                parts = line.split("&")
+                # Wrap first two columns in \textcolor{gray}{}
+                parts[1] = f"\\textcolor{{gray}}{{{parts[1].strip()}}}"
+                parts[2] = f"\\textcolor{{gray}}{{{parts[2].strip()}}}"
+                parts[3] = f"\\textcolor{{gray}}{{{parts[3].strip()}}}"
+                lines[i] = " & ".join(parts)
+        latex_table = "\n".join(lines)
+
+    return resize_table(
+        latex_table, dataset_name=dataset_name, metric_name=metric_name, caption=caption
+    )
+
+
+# %% Process Data
+
+small_std_font = False  # Use small font for the std
+show_std = True  # Show the std in the table
+keep_single_seed = None  # Set the string of the seed to keep only one run per seed
+
+for dataset_name in datasets_list:
+    for config_name in config_name_list:
+        for num_hypothesis in num_hypothesis_list:
+
+            BASE_PATHS = BASE_PATH_generator(dataset_name, config_name)
+
+            csv_file = pd.DataFrame()
+            for BASE_PATH in BASE_PATHS:
+                BASE_PATH = look_exact_path(BASE_PATH)
+                csv_file_path = pd.read_csv(BASE_PATH)
+                csv_file = pd.concat([csv_file, csv_file_path])
+
+            csv_file_num_hyps = configuration_to_extract(
+                csv_file, config_name, num_hypothesis, keep_single_seed
+            )
+
+            # Check for missing columns
+            required_columns = [
+                metric_name_rmse,
+                metric_name_risk,
+                metric_name_CRPS_sum,
+            ]
+            missing_columns = [
+                col for col in required_columns if col not in csv_file_num_hyps.columns
+            ]
+            if missing_columns:
+                # print(f"Missing columns in {BASE_PATH}: {missing_columns}")
+                continue  # Skip this configuration if columns are missing
+
+            if len(csv_file_num_hyps) == 0:
+                continue
+
+            # Keep only one run per seed, i.e., keep only runs with distinct csv_file_num_hyps[['Name']] (e.g, seed_3143_exchange_tactis2_16, seed_3142_exchange_tactis2_16).
+            # For a given 'Name', keep the most recent run (based on csv_file_num_hyps[['_start_time']], like 2025-04-07 21:07:56.873)
+            csv_file_num_hyps = csv_file_num_hyps.sort_values(
+                by="_start_time", ascending=False
+            )
+            csv_file_num_hyps = csv_file_num_hyps.drop_duplicates(subset=["Name"])
+
+            # If there are lines in the form seed_<seed>_solar_<method>_1_fromckpt remove seed_<seed>_solar_<method>_1_embed_dim_0
+            fromckpt_names = csv_file_num_hyps[
+                csv_file_num_hyps["Name"].str.contains("fromckpt")
+            ]["Name"].tolist()
+
+            # Extract the seed from the Name
+            csv_file_num_hyps["ext_seed"] = csv_file_num_hyps["Name"].str.extract(
+                r"seed_(\d+)"
+            )
+            # # Keep only one run per seed
+            # For each seed, keep if there is more than one run, if yes, keep the most recent run
+            csv_file_num_hyps = (
+                csv_file_num_hyps.groupby("ext_seed")
+                .apply(
+                    lambda x: x.sort_values(by="_start_time", ascending=False).head(1)
+                )
+                .reset_index(drop=True)
+            )
+
+            agg_results = csv_file_num_hyps.groupby(by=["model/name"]).agg(
+                {
+                    metric_name_rmse: ["mean", "std", "count"],
+                    metric_name_risk: ["mean", "std"],
+                    metric_name_CRPS_sum: ["mean", "std"],
+                    metric_name_tv: ["mean", "std"],
+                }
+            )
+
+            datasets[dataset_name] = agg_results
+
+            # if agg_results[(metric_name_rmse, 'count')].values[0] != 0 and agg_results[(metric_name_rmse, 'count')].values[0] != 4:
+            # print(csv_file_num_hyps[['Name']])
+            # print('Invalid number of runs for the std with {}, {}, {}: number of runs is {}'.format(config_name, dataset_name, num_hypothesis, agg_results[(metric_name_rmse, 'count')].values[0]))
+
+            # Check if the number of runs for the std:
+            # Extract the mean RMSE and risk for the current configuration and dataset
+            mean_rmse = agg_results[(metric_name_rmse, "mean")].values[0]
+            mean_risk = agg_results[(metric_name_risk, "mean")].values[0]
+            mean_CRPS_sum = agg_results[(metric_name_CRPS_sum, "mean")].values[0]
+            mean_tv = agg_results[(metric_name_tv, "mean")].values[0]
+
+            std_rmse = agg_results[(metric_name_rmse, "std")].values[0]
+            std_risk = agg_results[(metric_name_risk, "std")].values[0]
+            std_CRPS_sum = agg_results[(metric_name_CRPS_sum, "std")].values[0]
+            std_tv = agg_results[(metric_name_tv, "std")].values[0]
+
+            if type(mean_CRPS_sum) == np.float64 and not np.isnan(mean_CRPS_sum):
+                mean_CRPS_sum = mean_CRPS_sum.round(4)
+            if type(std_CRPS_sum) == np.float64 and not np.isnan(std_CRPS_sum):
+                std_CRPS_sum = std_CRPS_sum.round(4)
+            if type(mean_tv) == np.float64 and not np.isnan(mean_tv):
+                mean_tv = mean_tv.round(4)
+            if type(std_tv) == np.float64 and not np.isnan(std_tv):
+                std_tv = std_tv.round(4)
+
+            if dataset_name == "exchange":
+                mean_risk, mean_rmse = mean_risk.round(3), mean_rmse.round(3)
+                if type(std_risk) == np.float64 and not np.isnan(std_risk):
+                    std_risk, std_rmse = std_risk.round(3), std_rmse.round(3)
+            elif dataset_name == "wiki" or dataset_name == "electricity":
+                if type(mean_risk) == np.float64 and not np.isnan(mean_risk):
+                    mean_risk, mean_rmse = mean_risk.round(0).astype(
+                        int
+                    ), mean_rmse.round(0).astype(int)
+                if type(std_risk) == np.float64 and not np.isnan(std_risk):
+                    std_risk, std_rmse = std_risk.round(0).astype(int), std_rmse.round(
+                        0
+                    ).astype(int)
+            else:
+                if type(mean_risk) == np.float64 and not np.isnan(mean_risk):
+                    mean_risk, mean_rmse = mean_risk.round(2), mean_rmse.round(2)
+
+                if type(std_risk) == np.float64 and not np.isnan(std_risk):
+                    std_risk, std_rmse = std_risk.round(2), std_rmse.round(2)
+
+            if show_std is True:
+                if small_std_font:
+                    rmse_result = f"{mean_rmse}" + " \\scriptsize{{$\\pm$ {}}}".format(
+                        std_rmse
+                    )
+                    risk_result = f"{mean_risk}" + " \\scriptsize{{$\\pm$ {}}}".format(
+                        std_risk
+                    )
+                    CRPS_sum_result = (
+                        f"{mean_CRPS_sum}"
+                        + " \\scriptsize{{$\\pm$ {}}}".format(std_CRPS_sum)
+                    )
+                    tv_result = f"{mean_tv}" + " \\scriptsize{{$\\pm$ {}}}".format(
+                        std_tv
+                    )
+                else:
+                    rmse_result = f"{mean_rmse}" + " $\\pm$ {}".format(std_rmse)
+                    risk_result = f"{mean_risk}" + " $\\pm$ {}".format(std_risk)
+                    CRPS_sum_result = f"{mean_CRPS_sum}" + " $\\pm$ {}".format(
+                        std_CRPS_sum
+                    )
+                    tv_result = f"{mean_tv}" + " $\\pm$ {}".format(std_tv)
+            else:
+                rmse_result = f"{mean_rmse}"
+                risk_result = f"{mean_risk}"
+                CRPS_sum_result = f"{mean_CRPS_sum}"
+                tv_result = f"{mean_tv}"
+
+            # Store the results in the corresponding DataFrames
+            df_rmse[dataset_name].loc[num_hypothesis, config_name] = rmse_result
+            df_risk[dataset_name].loc[num_hypothesis, config_name] = risk_result
+            df_CRPS_sum[dataset_name].loc[num_hypothesis, config_name] = CRPS_sum_result
+            df_tv[dataset_name].loc[num_hypothesis, config_name] = tv_result
+
+# %% Generate Tables
+fixed_num_hypothesis = "16"
+fixed_metric = metric_name_risk
+# fixed_metric = metric_name_tv
+# fixed_metric = metric_name_rmse
+# fixed_metric = metric_name_CRPS_sum
+config_name_list = [
+    "ETS",
+    "transformer_tempflow",
+    "tactis2",
+    "timeGrad",
+    "deepAR",
+    "tempflow",
+    "MCLrelaxed0.1mean",
+    "aMCL0.95mean",
+]
+
+df = {
+    metric_name_risk: df_risk,
+    metric_name_rmse: df_rmse,
+    metric_name_CRPS_sum: df_CRPS_sum,
+    metric_name_tv: df_tv,
+}
+
+lower_is_better_dict = {
+    metric_name_risk: True,
+    metric_name_rmse: True,
+    metric_name_CRPS_sum: True,
+    metric_name_tv: True,
+}
+
+for metric in [fixed_metric]:
+    latex_distortion_table = create_fixed_hypothesis_metric_table(
+        metric_df_dict=df[metric],
+        metric_name=metric,
+        fixed_num_hypothesis=fixed_num_hypothesis,
+        datasets=datasets_list,
+        methods=config_name_list,
+        insert_vertical_line=True,
+        lower_is_better=lower_is_better_dict[metric],
+        gray_first_two_columns=True,
+    )
+
+    print(latex_distortion_table)
+
+# %%
+# Example usage for single dataset tables
+dataset_name = "solar"  # Change this to the dataset you want
+metric = metric_name_risk
+config_name_list = [
+    "ETS",
+    "transformer_tempflow",
+    "tactis2",
+    "timeGrad",
+    "deepAR",
+    "tempflow",
+    "MCLrelaxed0.1mean",
+    "aMCL0.95mean",
+]
+
+df = {
+    metric_name_risk: df_risk,
+    metric_name_rmse: df_rmse,
+    metric_name_CRPS_sum: df_CRPS_sum,
+}
+
+latex_table = create_single_dataset_table(
+    metric_df_dict=df[metric],
+    metric_name=metric,
+    dataset_name=dataset_name,
+    methods=config_name_list,
+    num_hypotheses_list=num_hypothesis_list,
+    insert_vertical_line=False,
+    gray_first_two_columns=True,
+)
+print(latex_table)
+print("\n")
+# %%

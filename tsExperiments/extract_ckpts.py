@@ -70,7 +70,9 @@ def parse_folder_name(
         # Handle both formats
         seed = parts[3]
         dataset_name = parts[4]
-        if "transformer" in parts and "tempflow" in parts:
+        if ("transformer" in parts and "tempflow" in parts) or (
+            "transformertempflow" in parts
+        ):
             model_name = "transformer_tempflow"
             num_hypotheses = parts[7]
         else:
@@ -170,7 +172,10 @@ def build_checkpoint_structure(
             )
             continue
 
-        dataset_log_dir = dataset_log_dir / "runs"
+        if "runs" in os.listdir(dataset_log_dir):
+            dataset_log_dir = dataset_log_dir / "runs"
+        else:
+            dataset_log_dir = dataset_log_dir
 
         for folder in os.listdir(dataset_log_dir):
             folder_path = dataset_log_dir / folder

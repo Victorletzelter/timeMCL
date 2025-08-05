@@ -52,6 +52,12 @@ fi
 
 for dataset in "${datasets[@]}"; do
 
+    if [ $dataset == "taxi" ]; then
+        batch_size=32 # Reduce batch size for taxi dataset due to (possible) memory constraints
+    else
+        batch_size=200 # Default batch size
+    fi
+
     if [ $model == "tactis2" ]; then
         key=seed_${seed}_${dataset}_${model}_${num_hyp_ckpt}_phase_1
         ckpt_path_phase1=$(echo ${CKPT_PATHS} | jq -r --arg key "${key}" '.[$key]')
@@ -59,7 +65,7 @@ for dataset in "${datasets[@]}"; do
         ckpt_path_phase2=$(echo ${CKPT_PATHS} | jq -r --arg key "${key}" '.[$key]')
         if [ -n "${ckpt_path_phase1}" ] && [ "${ckpt_path_phase1}" != "null" ]; then
             echo "Evaluating ${ckpt_path_phase1}" and ${ckpt_path_phase2}
-            python train.py ckpt_path_phase1=${ckpt_path_phase1} ckpt_path_phase2=${ckpt_path_phase2} experiment=${dataset}.yaml model=${model}.yaml run_name=seed_${seed}_${dataset}_${model}_${num_hyp}_fromckpt model.params.num_hypotheses=${num_hyp} logger.mlflow.experiment_name=eval_${dataset}_${max_epochs} task_name=eval_${dataset}_${max_epochs} trainer.max_epochs=${max_epochs} seed=3141 train=False test=True
+            python train.py ckpt_path_phase1=${ckpt_path_phase1} ckpt_path_phase2=${ckpt_path_phase2} experiment=${dataset}.yaml model=${model}.yaml run_name=seed_${seed}_${dataset}_${model}_${num_hyp}_fromckpt model.params.num_hypotheses=${num_hyp} logger.mlflow.experiment_name=eval_${dataset}_${max_epochs} task_name=eval_${dataset}_${max_epochs} trainer.max_epochs=${max_epochs} seed=3141 train=False test=True data.batch_size=${batch_size}
         else
             echo "ckpt_path is None for ${key}"
         fi
@@ -74,9 +80,9 @@ for dataset in "${datasets[@]}"; do
         if [ -n "${ckpt_path}" ] && [ "${ckpt_path}" != "null" ]; then
         echo "Evaluating ${ckpt_path}"
             if [ $wta_mode == "awta" ]; then
-                python train.py ckpt_path=${ckpt_path} experiment=${dataset}.yaml model=${model}.yaml run_name=seed_${seed}_${dataset}_${model}_${num_hyp}_fromckpt model.params.num_hypotheses=${num_hyp} logger.mlflow.experiment_name=eval_${dataset}_${max_epochs} task_name=eval_${dataset}_${max_epochs} trainer.max_epochs=${max_epochs} seed=3141 train=False test=True model.compute_flops=False
+                python train.py ckpt_path=${ckpt_path} experiment=${dataset}.yaml model=${model}.yaml run_name=seed_${seed}_${dataset}_${model}_${wta_mode}_${num_hyp}_fromckpt model.params.num_hypotheses=${num_hyp} logger.mlflow.experiment_name=eval_${dataset}_${max_epochs} task_name=eval_${dataset}_${max_epochs} trainer.max_epochs=${max_epochs} seed=3141 train=False test=True model.compute_flops=False model.params.wta_mode=$wta_mode data.batch_size=${batch_size}
             elif [ $wta_mode == "relaxed-wta" ]; then            
-                python train.py ckpt_path=${ckpt_path} experiment=${dataset}.yaml model=${model}.yaml run_name=seed_${seed}_${dataset}_${model}_${num_hyp}_fromckpt model.params.num_hypotheses=${num_hyp} logger.mlflow.experiment_name=eval_${dataset}_${max_epochs} task_name=eval_${dataset}_${max_epochs} trainer.max_epochs=${max_epochs} seed=3141 train=False test=True model.compute_flops=False
+                python train.py ckpt_path=${ckpt_path} experiment=${dataset}.yaml model=${model}.yaml run_name=seed_${seed}_${dataset}_${model}_${wta_mode}_${num_hyp}_fromckpt model.params.num_hypotheses=${num_hyp} logger.mlflow.experiment_name=eval_${dataset}_${max_epochs} task_name=eval_${dataset}_${max_epochs} trainer.max_epochs=${max_epochs} seed=3141 train=False test=True model.compute_flops=False model.params.wta_mode=$wta_mode data.batch_size=${batch_size}
             fi
         else
             echo "ckpt_path is None for ${key}"
@@ -87,7 +93,7 @@ for dataset in "${datasets[@]}"; do
         ckpt_path=$(echo ${CKPT_PATHS} | jq -r --arg key "${key}" '.[$key]')
         if [ -n "${ckpt_path}" ] && [ "${ckpt_path}" != "null" ]; then
             echo "Evaluating ${ckpt_path}"
-            python train.py ckpt_path=${ckpt_path} experiment=${dataset}.yaml model=${model}.yaml run_name=seed_${seed}_${dataset}_${model}_${num_hyp}_fromckpt model.params.num_hypotheses=${num_hyp} logger.mlflow.experiment_name=eval_${dataset}_${max_epochs} task_name=eval_${dataset}_${max_epochs} trainer.max_epochs=${max_epochs} seed=3141 train=False test=True model.compute_flops=False
+            python train.py ckpt_path=${ckpt_path} experiment=${dataset}.yaml model=${model}.yaml run_name=seed_${seed}_${dataset}_${model}_${num_hyp}_fromckpt model.params.num_hypotheses=${num_hyp} logger.mlflow.experiment_name=eval_${dataset}_${max_epochs} task_name=eval_${dataset}_${max_epochs} trainer.max_epochs=${max_epochs} seed=3141 train=False test=True model.compute_flops=False data.batch_size=${batch_size}
         else
             echo "ckpt_path is None for ${key}"
         fi

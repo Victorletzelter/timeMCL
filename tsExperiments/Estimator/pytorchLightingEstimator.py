@@ -217,9 +217,6 @@ class PyTorchLightningEstimator(Estimator):
                 ckpt_path=ckpt_path,
             )
 
-            # if is_tactis:
-            #     best_model = training_network
-            # else:
             if checkpoint.best_model_path != "":
                 logger.info(f"Loading best model from {checkpoint.best_model_path}")
                 best_model = training_network.__class__.load_from_checkpoint(

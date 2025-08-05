@@ -164,10 +164,10 @@ bash eval.sh 3141 all timeGrad 16
 bash eval.sh 3141 all deepAR 16
 bash eval.sh 3141 all transformer_tempflow 16
 ```
-The results can then be visualized with the integrated MLFLow logger. To do so, please move to the created MLFLow dir with `cd tsExperiments/logs/mlflow`. To do so, please define a port number, e.g., `PORT=5066`. Then, run `GUNICORN_CMD_ARGS="--timeout 0" mlflow ui -p $PORT`. The results can then be analyzed in `http://localhost:{PORT}/` .
+The results can then be visualized with the integrated MLFLow logger. To do so, please move to the created MLFLow dir with `cd tsExperiments/logs/mlflow`. To do so, please define a port number, e.g., `PORT=5066`. Then, run `GUNICORN_CMD_ARGS="--timeout 0" mlflow ui -p $PORT`. The results can then be analyzed in `http://localhost:{PORT}/`.
 
 We provide a dedicated script, `flops.sh` to compute floating points operations (with randomly initialized models). It can be executed as `bash flops.sh`.
-We performed run-time evaluation on a single NVIDIA GeForce RTX 2080 Ti . To evaluate run-time with your own machine, please execute the following script:
+We performed run-time evaluation on a single NVIDIA GeForce RTX 2080 Ti. To evaluate run-time with your own machine, please execute the following script:
 
 ```shell
 cd tsExperiments/computation_time ; python evaluate_time.py
