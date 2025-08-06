@@ -17,13 +17,13 @@ We introduce **TimeMCL**, a method leveraging the Multiple Choice Learning (MCL)
 └── tsExperiments # Code for reproducing the experiments with real world datasets
 ```
 
-## Fast demo
+## Fast Demo
 
-For quick prototyping, we provide a notebook in [TimeMCL-Solar.ipynb](demo/TimeMCL-Solar.ipynb) for training, inference, evaluation and plotting on real-world time series. A similar demonstration for synthetic data experiments is available in [toy.ipynb](demo/toy.ipynb).
+For quick prototyping, we provide a notebook in [TimeMCL-Solar.ipynb](demo/TimeMCL-Solar.ipynb) for training, inference, evaluation, and plotting on real-world time series data. A similar demonstration for synthetic data experiments is available in [toy.ipynb](demo/toy.ipynb).
 
-## Synthetic data experiments
+## Synthetic Data Experiments
 
-This part of the code focuses on **toy experiments** with synthetic data. These toy experiments help illustrate the *TimeMCL* model's underlying theory and demonstrate, on controlled examples, how *TimeMCL* acts as a functional quantizer of stochastic processes.
+This part of the code focuses on **toy experiments** with synthetic data. These toy experiments help illustrate the *TimeMCL* model's underlying theory and demonstrate, using controlled examples, how *TimeMCL* acts as a functional quantizer for stochastic processes.
 
 ### Datasets
 
@@ -53,9 +53,9 @@ cd toy
 pip install -r requirements.txt
 ```
 
-LaTeX can optionally be used for plot rendering. It can be installed with: `sudo apt-get install -y dvipng texlive-latex-extra texlive-fonts-recommended cm-super`.
+LaTeX can optionally be used for plot rendering. Install it with: `sudo apt-get install -y dvipng texlive-latex-extra texlive-fonts-recommended cm-super`.
 
-### Training and inference
+### Training and Inference
 
 For training TimeMCL on the synthetic datasets, run:
 
@@ -77,18 +77,18 @@ The figure will be stored in `toy/figures/toy_figure.png`.
 
 ![Conditional Quantization of Stochastic Processes with TimeMCL.](./toy/figures/toy_figure.png)
 
-## Real datasets experiments
+## Real Datasets Experiments
 
 ### Setup
 
-To reproduce the experiments on real-world dataset, you can setup an environment as follows. This setup assumes you have Python3 installed (we used Python 3.10.15).
+To reproduce the experiments on real-world datasets, you can set up an environment as follows. This setup assumes you have Python3 installed (we used Python 3.10.15).
 
 ```shell
 cd tsExperiments
 bash setup-env.sh
 ```
 
-The environment variable ENV_DIR should then be set. You can activate the environment with 
+The environment variable ENV_DIR should then be set. After running the setup script, the environment variable ENV_DIR will be set. Activate the environment with:
 
 ```shell
 source $ENV_DIR/bin/activate
@@ -96,7 +96,7 @@ source $ENV_DIR/bin/activate
 
 ### Training
 
-To train timeMCL with 16 hypotheses on all the datasets `('electricity' 'exchange' 'solar' 'taxi' 'traffic' 'wiki')` with seed 3141, with annealed and relaxed variants (with default parameters), use the following commands:
+To train timeMCL with 16 hypotheses on all datasets (`'electricity'`, `'exchange'`, `'solar'`, `'taxi'`, `'traffic'`, `'wiki'`) using seed 3141, and with annealed and relaxed variants (with default parameters), use the following commands:
 
 ```shell
 bash train.sh 3141 all timeMCL 16 awta # For the annealed variant
@@ -113,6 +113,8 @@ bash train.sh 3141 all ETS
 bash train.sh 3141 all deepAR
 bash train.sh 3141 all transformer_tempflow
 ```
+
+If you have the resources, you can run the above trainings with several seeds, to be able to compute standard deviations on the scores of each baseline.
 
 When launching the above trainings, the logs will be saved in `tsExperiments/logs` following the [Hydra](https://github.com/facebookresearch/hydra) template, that is organized as follows:
 
@@ -131,10 +133,14 @@ When launching the above trainings, the logs will be saved in `tsExperiments/log
 
 ### Inference and evaluation
 
-To evaluate a model with a given checkpoint path, please write a command in this form (except for tactis2):
+#### Trained models checkpoints path extraction 
+
+If you performed the training above, the checkpoints should be stored in `tsExperiments/logs`. In case you just want to launch evaluation with our models, we provide a Google Drive link with a folder containing our trained models, that should be placed in `tsExperiments/logs`.
+
+The general command to evaluate a model with a given checkpoint path, the command takes this form (except for tactis2):
 
 ```shell
-python train.py ckpt_path=${ckpt_path} experiment=${dataset}.yaml model=${model}.yaml run_name=seed_${training_seed}_${dataset}_${model}_${num_hyp} model.params.num_hypotheses=${num_hyp} logger.mlflow.experiment_name=eval_${dataset} task_name=eval_${dataset} seed=${inference_seed} train=False test=True model.compute_flops=False
+python train.py ckpt_path=${ckpt_path} experiment=${dataset}.yaml model=${model}.yaml run_name=seed_${training_seed}_${dataset}_${model}_${num_hyp} model.params.num_hypotheses=${num_hyp} logger.mlflow.experiment_name=eval_${dataset} task_name=eval_${dataset} seed=${inference_seed} train=False test=True
 ```
 where 
 * `model` is the model to be evaluated, following the file names in `configs/model`.
@@ -142,16 +148,20 @@ where
 * `dataset` is the dataset used for evaluation.
 * `num_hyp` is the number of hypotheses (or samples) used for inference.
 
-For Tactis2, please set instead of `ckpt_path`, `ckpt_path_phase1` and `ckpt_path_phase2`, for the path of the models of phase 1 and 2. 
+For Tactis2, instead of `ckpt_path`, set `ckpt_path_phase1` and `ckpt_path_phase2` to the paths of the models for phase 1 and phase 2, respectively.
 
-If necessary, we provide `extract_ckpts.py`, a python script to automatize checkpoint path extraction. It can be executed by running:
+To avoid the burden of extracting each checkpoint path by hand, we provide `extract_ckpts.py`, a python script to automate checkpoint path extraction. It can be executed by running:
 
 ```shell
 python extract_ckpts.py 
 ```
 
-And a json file named `ckpts.json` and containing the checkpoint paths will be created in the folder `tsExperiments/`.
-In this case, the full evaluation can be performed by first installing `jq`, e.g., with `sudo apt-get update ; sudo apt-get install jq -y --fix-missing`.Then, the evaluation scripts for checkpoints trained with 16 hypotheses and seed 3141 can be launched:
+Then, a json file named `ckpts.json` and containing the checkpoint paths will be created in the folder `tsExperiments/`.
+
+#### Inference, metrics computation and results extraction
+
+In this case, the full evaluation can be performed by first installing `jq`, e.g., with `sudo apt-get update ; sudo apt-get install jq -y --fix-missing`. Then, the evaluation scripts for checkpoints trained with 16 hypotheses and seed 3141 can be launched:
+
 ```shell
 bash eval.sh 3141 all timeMCL 16 awta
 bash eval.sh 3141 all timeMCL 16 relaxed-wta
@@ -164,16 +174,55 @@ bash eval.sh 3141 all timeGrad 16
 bash eval.sh 3141 all deepAR 16
 bash eval.sh 3141 all transformer_tempflow 16
 ```
-The results can then be visualized with the integrated MLFLow logger. To do so, please move to the created MLFLow dir with `cd tsExperiments/logs/mlflow`. To do so, please define a port number, e.g., `PORT=5066`. Then, run `GUNICORN_CMD_ARGS="--timeout 0" mlflow ui -p $PORT`. The results can then be analyzed in `http://localhost:{PORT}/`.
 
-We provide a dedicated script, `flops.sh` to compute floating points operations (with randomly initialized models). It can be executed as `bash flops.sh`.
-We performed run-time evaluation on a single NVIDIA GeForce RTX 2080 Ti. To evaluate run-time with your own machine, please execute the following script:
+To launch those scripts with the four random states provided in the checkpoints replace `3141` by `all_seeds` (e.g., with `bash eval.sh all_seeds all timeMCL 16 awta`). Update the `all_seeds` arrays in `eval.sh` accordingly if you ran the trainings by yourself.
+
+The results can then be visualized with the integrated MLFLow logger. To do so, please move to the created MLFLow dir with `cd tsExperiments/logs/mlflow`. To do so, please define a port number, e.g., `PORT=5066`. Then, run 
+```shell
+GUNICORN_CMD_ARGS="--timeout 0" mlflow ui -p $PORT
+``` 
+The results can then be analyzed in `http://localhost:{PORT}/`.
+
+The full results will be downloaded as csv files (one for each dataset) in `tsExperiments/results/saved_csv` by running 
+```shell
+bash extract_results.sh
+```
+To generate LaTeX tables from these results, run:
+```shell
+bash extract_tables.py
+``` 
+The LaTeX tables will then be generated in `latex_tables_output.txt`.
+
+#### Visualisation
+
+To reproduce visualisations from Figures 3, 7 and 8, first, you need to have run inference with the arg `model.plot_forecasts=True`. We provide a script to run the required inference (without computing the metrics) for each baseline, that can be run by first setting a seed number to plot (e.g., seed=42), and run it with:
+```bash
+cd tsExperiments/viz_scripts
+bash viz_scripts $seed timeMCL awta
+bash viz_scripts $seed timeMCL relaxed-wta
+bash viz_scripts $seed tempflow
+bash viz_scripts $seed tactis2
+bash viz_scripts $seed timeGrad
+bash viz_scripts $seed transformer_tempflow
+```
+
+Then run 
+```bash
+cd tsExperiments
+python plotting.py
+```
+The Figures will be saved in `logs/plots/{dataset_name}`.
+
+#### Computational cost evaluation
+
+We provide a dedicated script, `flops.sh` to compute floating point operations (with randomly initialized models). It can be executed as `bash flops.sh`.
+We performed runtime evaluation on a single NVIDIA GeForce RTX 2080 Ti. To evaluate runtime with your own machine, please execute the following script:
 
 ```shell
 cd tsExperiments/computation_time ; python evaluate_time.py
 ```
 
-The run-time results will be stored in `tsExperiments/computation_time/results/` and can be turned into a table through the instructions in the `tsExperiments/computation_time/extract_table.py` file.
+The run-time results will be stored in `tsExperiments/computation_time/results/` and can be turned into a table by following the instructions in the `tsExperiments/computation_time/extract_table.py` file.
 
 ### Acknowledgments
 

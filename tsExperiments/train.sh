@@ -75,6 +75,10 @@ if [ $model == "timeMCL" ]; then
         echo "Error: Invalid wta_mode"
         exit 1
     fi
+elif [ $model == "ETS" ]; then
+    for dataset in "${datasets[@]}"; do
+        python train.py experiment=${dataset}.yaml model=${model}.yaml run_name=seed_${seed}_${dataset}_${model}_${num_hyp} model.params.num_hypotheses=${num_hyp} logger.mlflow.experiment_name=eval_${dataset}_${max_epochs} task_name=eval_${dataset}_${max_epochs} trainer.max_epochs=${max_epochs} seed=${seed} test=True
+    done
 else
     for dataset in "${datasets[@]}"; do
         python train.py experiment=${dataset}.yaml model=${model}.yaml run_name=seed_${seed}_${dataset}_${model}_${num_hyp} model.params.num_hypotheses=${num_hyp} logger.mlflow.experiment_name=train_${dataset}_${max_epochs} task_name=${dataset}_${max_epochs} trainer.max_epochs=${max_epochs} seed=${seed} test=False
