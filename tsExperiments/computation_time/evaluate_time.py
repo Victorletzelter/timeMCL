@@ -324,7 +324,7 @@ if __name__ == "__main__":
     list_dataset_names = [dataset_name]
     nb_simu = args.nb_simu
 
-    dataset_path = "/home/victorletzelter/iveco/workspace_backup/victorletzelter/tsExperiments/gluonts_cache/datasets"
+    dataset_path = "~/.gluonts/datasets"
 
     dataset_time = main(
         list_model_names,
@@ -338,5 +338,5 @@ if __name__ == "__main__":
     name_of_file = f"time_of_runs_{dataset_name}_nbsimu_{nb_simu}.csv"
     # Save the dataset
     dataset_time.to_csv(
-        f"/home/victorletzelter/workspace/tsExperiments/tsExperiments/computation_time/results/{name_of_file}"
+        f"{os.path.join(os.environ['PROJECT_ROOT'], 'tsExperiments', 'computation_time', 'results', name_of_file)}"
     )  # saving the dataset.

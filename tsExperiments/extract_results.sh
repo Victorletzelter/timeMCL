@@ -20,3 +20,5 @@ for dataset_name in "${datasets[@]}"
 do
     python scripts_download_csv.py --experiment_name=eval_${dataset_name}_200 --save_dir=${PROJECT_ROOT}/tsExperiments/results/saved_csv
 done
+
+python scripts_download_csv.py --experiment_name=eval_crypt_101 --save_dir=${PROJECT_ROOT}/tsExperiments/results/saved_csv

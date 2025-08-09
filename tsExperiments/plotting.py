@@ -570,8 +570,6 @@ def plot_multiple_methods(dataset, methods, num_hyps, suffixes, rows=6, cols=3, 
             logdir = find_last_log_dir(dataset, method, num_hyps, suffix, seed)
 
             print("logdir", logdir)
-            
-            import pickle
 
             if logdir is not None:
                 # Load data
@@ -660,7 +658,7 @@ def plot_multiple_methods(dataset, methods, num_hyps, suffixes, rows=6, cols=3, 
               loc='upper center', 
               bbox_to_anchor=bbox_to_anchor,
               ncol=ncol,  # Adjust number of columns as needed
-            fontsize=27
+            fontsize=27 if dataset != "solar" else 32
               )
     
     plt.tight_layout()
@@ -691,8 +689,6 @@ def plot_method_column(axs, target_df, hypothesis_forecasts, forecast_length, co
 # Usage example:
 methods = ['tactis2', 'timeGrad', 'tempflow','timeMCL']
 suffixes = {'timeMCL': ['amcl', 'relaxed']}  # Only timeMCL has suffixes
-
-num_hyps = 8
 
 dim_to_plot_to_plot = {
     'solar': [0,2,5],

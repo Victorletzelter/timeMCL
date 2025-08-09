@@ -273,7 +273,7 @@ def create_fixed_hypothesis_metric_table(
 
 
 # %% Initialize DataFrames
-def initialize_dataframes():
+def initialize_dataframes(datasets_list, config_name_list, num_hypothesis_list):
     """Initialize DataFrames for the metrics."""
     datasets = {}
     df_rmse, df_risk, df_CRPS_sum, df_tv = {}, {}, {}, {}
@@ -294,16 +294,13 @@ def initialize_dataframes():
 
     return df_rmse, df_risk, df_CRPS_sum, df_tv, datasets
 
-
-df_rmse, df_risk, df_CRPS_sum, df_tv, datasets = initialize_dataframes()
-
+df_rmse, df_risk, df_CRPS_sum, df_tv, datasets = initialize_dataframes(datasets_list, config_name_list, num_hypothesis_list)
 
 def BASE_PATH_generator(dataset_name, config_name):
     """Generate the base path for results CSV based on dataset and config."""
     return [
         f"{os.environ['PROJECT_ROOT']}/tsExperiments/results/saved_csv/eval_{dataset_name}_200.csv"
     ]
-
 
 def create_single_dataset_table(
     metric_df_dict,
@@ -583,7 +580,7 @@ def extract_data(
     return df_rmse, df_risk, df_CRPS_sum, df_tv
 
 
-def reproduce_tables():
+def reproduce_tables(plot_additional_tables=False):
     """Create LaTeX tables from the results as csv files, and save them in a txt file."""
     show_std = True  # Show the std in the table
     keep_single_seed = None  # Set the string of the seed to keep only one run per seed
@@ -619,7 +616,7 @@ def reproduce_tables():
         # Table 1: Distortion Comparison (16 hyps)
         fixed_num_hypothesis = "16"
         fixed_metric = metric_name_risk
-        df_rmse, df_risk, df_CRPS_sum, df_tv, datasets = initialize_dataframes()
+        df_rmse, df_risk, df_CRPS_sum, df_tv, datasets = initialize_dataframes(datasets_list, config_name_list, num_hypothesis_list)
         df_rmse, df_risk, df_CRPS_sum, df_tv = extract_data(
             datasets=datasets,
             df_rmse=df_rmse,
@@ -665,7 +662,7 @@ def reproduce_tables():
             "aMCL0.95mean",
         ]
         fixed_metric = metric_name_tv
-        df_rmse, df_risk, df_CRPS_sum, df_tv, datasets = initialize_dataframes()
+        df_rmse, df_risk, df_CRPS_sum, df_tv, datasets = initialize_dataframes(datasets_list, config_name_list, num_hypothesis_list)
         df_rmse, df_risk, df_CRPS_sum, df_tv = extract_data(
             datasets=datasets,
             df_rmse=df_rmse,
@@ -713,7 +710,7 @@ def reproduce_tables():
             "MCLrelaxed0.1mean",
             "aMCL0.95mean",
         ]
-        df_rmse, df_risk, df_CRPS_sum, df_tv, datasets = initialize_dataframes()
+        df_rmse, df_risk, df_CRPS_sum, df_tv, datasets = initialize_dataframes(datasets_list, config_name_list, num_hypothesis_list)
         df_rmse, df_risk, df_CRPS_sum, df_tv = extract_data(
             datasets=datasets,
             df_rmse=df_rmse,
@@ -766,7 +763,7 @@ def reproduce_tables():
             "MCLrelaxed0.1mean",
             "aMCL0.95mean",
         ]
-        df_rmse, df_risk, df_CRPS_sum, df_tv, datasets = initialize_dataframes()
+        df_rmse, df_risk, df_CRPS_sum, df_tv, datasets = initialize_dataframes(datasets_list, config_name_list, num_hypothesis_list)
         df_rmse, df_risk, df_CRPS_sum, df_tv = extract_data(
             datasets=datasets,
             df_rmse=df_rmse,
@@ -817,7 +814,7 @@ def reproduce_tables():
             "MCLrelaxed0.1mean",
             "aMCL0.95mean",
         ]
-        df_rmse, df_risk, df_CRPS_sum, df_tv, datasets = initialize_dataframes()
+        df_rmse, df_risk, df_CRPS_sum, df_tv, datasets = initialize_dataframes(datasets_list, config_name_list, num_hypothesis_list)
         df_rmse, df_risk, df_CRPS_sum, df_tv = extract_data(
             datasets=datasets,
             df_rmse=df_rmse,
@@ -868,7 +865,7 @@ def reproduce_tables():
             "MCLrelaxed0.1mean",
             "aMCL0.95mean",
         ]
-        df_rmse, df_risk, df_CRPS_sum, df_tv, datasets = initialize_dataframes()
+        df_rmse, df_risk, df_CRPS_sum, df_tv, datasets = initialize_dataframes(datasets_list, config_name_list, num_hypothesis_list)
         df_rmse, df_risk, df_CRPS_sum, df_tv = extract_data(
             datasets=datasets,
             df_rmse=df_rmse,
@@ -919,7 +916,7 @@ def reproduce_tables():
             "MCLrelaxed0.1mean",
             "aMCL0.95mean",
         ]
-        df_rmse, df_risk, df_CRPS_sum, df_tv, datasets = initialize_dataframes()
+        df_rmse, df_risk, df_CRPS_sum, df_tv, datasets = initialize_dataframes(datasets_list, config_name_list, num_hypothesis_list)
         df_rmse, df_risk, df_CRPS_sum, df_tv = extract_data(
             datasets=datasets,
             df_rmse=df_rmse,
@@ -960,6 +957,104 @@ def reproduce_tables():
 
         print("Tables generated successfully in latex_tables_output.txt!")
 
+        # Table 11 Total Variation full scores
+        config_name_list = [
+            "ETS",
+            "transformer_tempflow",
+            "tactis2",
+            "timeGrad",
+            "deepAR",
+            "tempflow",
+            "MCLrelaxed0.1mean",
+            "aMCL0.95mean",
+        ]
+        fixed_metric = metric_name_tv
+        df_rmse, df_risk, df_CRPS_sum, df_tv, datasets = initialize_dataframes(datasets_list, config_name_list, num_hypothesis_list)
+        df_rmse, df_risk, df_CRPS_sum, df_tv = extract_data(
+            datasets=datasets,
+            df_rmse=df_rmse,
+            df_risk=df_risk,
+            df_CRPS_sum=df_CRPS_sum,
+            df_tv=df_tv,
+            small_std_font=False,
+            keep_single_seed=keep_single_seed,
+            datasets_list=datasets_list,
+            show_std=show_std,
+            config_name_list=config_name_list,
+            num_hypothesis_list=num_hypothesis_list,
+            metric_name_rmse=metric_name_rmse,
+            metric_name_risk=metric_name_risk,
+            metric_name_CRPS_sum=metric_name_CRPS_sum,
+            metric_name_tv=metric_name_tv,
+        )
+        df = {
+            metric_name_risk: df_risk,
+            metric_name_rmse: df_rmse,
+            metric_name_CRPS_sum: df_CRPS_sum,
+            metric_name_tv: df_tv,
+        }
+
+        latex_tv_table = create_fixed_hypothesis_metric_table(
+            metric_df_dict=df[fixed_metric],
+            metric_name=fixed_metric,
+            fixed_num_hypothesis=fixed_num_hypothesis,
+            datasets=datasets_list,
+            methods=config_name_list,
+            insert_vertical_line=True,
+            lower_is_better=lower_is_better_dict[fixed_metric],
+            gray_first_two_columns=True,
+        )
+        f.write(latex_tv_table + "\n\n")
+
+    if plot_additional_tables:
+        # Table 11: Total Variation (4 hyps)
+        config_name_list = [
+            "ETS",
+            "transformer_tempflow",
+            "tactis2",
+            "timeGrad",
+            "tempflow",
+            "MCLrelaxed0.1mean",
+            "aMCL0.95mean",
+        ]
+        fixed_metric = metric_name_tv
+        num_hypothesis_list = ["4"]
+        datasets_list = ["crypt"]
+        df_rmse, df_risk, df_CRPS_sum, df_tv, datasets = initialize_dataframes(datasets_list, config_name_list, num_hypothesis_list)
+        df_rmse, df_risk, df_CRPS_sum, df_tv = extract_data(
+            datasets=datasets,
+            df_rmse=df_rmse,
+            df_risk=df_risk,
+            df_CRPS_sum=df_CRPS_sum,
+            df_tv=df_tv,
+            small_std_font=False,
+            keep_single_seed=keep_single_seed,
+            datasets_list=datasets_list,
+            show_std=show_std,
+            config_name_list=config_name_list,
+            num_hypothesis_list=num_hypothesis_list,
+            metric_name_rmse=metric_name_rmse,
+            metric_name_risk=metric_name_risk,
+            metric_name_CRPS_sum=metric_name_CRPS_sum,
+            metric_name_tv=metric_name_tv,
+        )
+        df = {
+            metric_name_risk: df_risk,
+            metric_name_rmse: df_rmse,
+            metric_name_CRPS_sum: df_CRPS_sum,
+            metric_name_tv: df_tv,
+        }
+
+        latex_tv_table = create_fixed_hypothesis_metric_table(
+            metric_df_dict=df[fixed_metric],
+            metric_name=fixed_metric,
+            fixed_num_hypothesis=4,
+            datasets=datasets_list,
+            methods=config_name_list,
+            insert_vertical_line=True,
+            lower_is_better=lower_is_better_dict[fixed_metric],
+            gray_first_two_columns=True,
+        )
 
 # %%
 
@@ -1081,3 +1176,401 @@ if generate_tables_single_dataset:
     )
     print(latex_table)
     print("\n")
+
+################## Extract Tables Crypt
+
+#%%
+
+csv_files = os.listdir(os.path.join(os.environ['PROJECT_ROOT'], 'tsExperiments', 'results', 'saved_csv'))
+csv_path = [e for e in csv_files if 'crypt_101' in e]
+assert len(csv_path) == 1, "There should be only one crypt_101 file"
+csv_path = os.path.join(os.environ['PROJECT_ROOT'], 'tsExperiments', 'results', 'saved_csv', csv_path[0])
+
+#%%
+
+df = pd.read_csv(csv_path)
+
+### For the row, keep only those where model/params/scaler_type is mean_std
+df = df[~((df['model/name'].str.contains('timeGrad')) & (df['model/params/scaler_type'] != 'mean_std'))]
+
+# Same for tempflow
+df = df[~((df['model/name'].str.contains('tempflow')) & (df['model/params/scaler_type'] != 'mean_std'))]
+
+# Opposite for deepAR
+df = df[~((df['model/name'].str.contains('deepAR')) & (df['model/params/scaler_type'] == 'mean_std'))]
+
+# Opposite for transformer_tempflow
+df = df[~((df['model/name'].str.contains('transformer_tempflow')) & (df['model/params/scaler_type'] != 'mean_std'))]
+
+#%%
+
+df = df.sort_values(
+                    by="_start_time", ascending=False
+                )
+
+            
+df = df.drop_duplicates(subset=["Name"])
+
+#%%
+
+def set_lowest_and_second_lowest_in_bold_and_underline(df, exclude_methods=[]):
+    """Format lowest and second lowest values in DataFrame"""
+    for index, row in df.iterrows():
+        values = []
+        method_value_map = {}
+        # Process non-excluded methods for min/second min
+        for col in [c for c in df.columns if c not in exclude_methods]:
+            cell = row[col]
+            if isinstance(cell, str):
+                try:
+                    value = float(cell.split(' ')[0])
+                    values.append(value)
+                    method_value_map[col] = value
+                except ValueError:
+                    continue
+
+        if not values:
+            continue
+
+        sorted_values = sorted(set(values))
+        min_val = sorted_values[0]
+        second_min_val = sorted_values[1] if len(sorted_values) > 1 else None
+
+        # Process non-excluded methods for bold/underline
+        for col in [c for c in df.columns if c not in exclude_methods]:
+            cell = row[col]
+            if isinstance(cell, str):
+                try:
+                    value = float(cell.split(' ')[0])
+                    if value == min_val:
+                        df.at[index, col] = f"\\textbf{{{cell}}}"
+                    elif second_min_val is not None and value == second_min_val:
+                        df.at[index, col] = f"\\underline{{{cell}}}"
+                except ValueError:
+                    continue
+
+        # Process excluded methods to be grey
+        for col in exclude_methods:
+            cell = row[col]
+            if isinstance(cell, str):
+                df.at[index, col] = f"\\textcolor{{gray}}{{{cell}}}"
+
+    return df
+
+result = df.groupby(['model/name']).agg(
+    distortion_mean=('Distorsion', 'mean'),
+    distortion_std=('Distorsion', 'std'),
+    total_variation_mean=('total_variation', 'mean'),
+    total_variation_std=('total_variation', 'std'),
+    crps_mean=('m_sum_mean_wQuantileLoss', 'mean'),
+    crps_std=('m_sum_mean_wQuantileLoss', 'std'),
+    RMSE_mean=('m_sum_RMSE', 'mean'),
+    RMSE_std=('m_sum_RMSE', 'std'),
+).reset_index()
+
+#%%
+
+# exclude wta_mode
+result = result[~(result['model/name'].str.contains('timeMCL'))]
+
+result_awta = df.groupby(['model/name', 'model/params/wta_mode',"model/params/scaler_type"]).agg(
+    distortion_mean=('Distorsion', 'mean'),
+    distortion_std=('Distorsion', 'std'),
+    total_variation_mean=('total_variation', 'mean'),
+    total_variation_std=('total_variation', 'std'),
+    crps_mean=('m_sum_mean_wQuantileLoss', 'mean'),
+    crps_std=('m_sum_mean_wQuantileLoss', 'std'),
+    RMSE_mean=('m_sum_RMSE', 'mean'),
+    RMSE_std=('m_sum_RMSE', 'std'),
+).reset_index()
+result_awta = result_awta[result_awta['model/params/scaler_type'] == 'mean_std']
+result_awta['model/name'] = result_awta['model/name'] + result_awta['model/params/wta_mode']
+# exclude relaxed mode
+result_awta = result_awta[result_awta['model/params/wta_mode'] != 'relaxed-wta']
+#%%
+# Same for result_awta
+result_awta = result_awta.drop(columns=['model/params/wta_mode', 'model/params/scaler_type'])
+
+# Concatenate the two DataFrames, and reindex
+result = pd.concat([result, result_awta])
+result = result.reset_index(drop=True)
+
+#%%
+
+# Create result columns with mean ± std format
+result['distortion'] = result['distortion_mean'].round(3).astype(str) + ' $\\pm$ ' + result['distortion_std'].round(3).astype(str)
+result['total_variation'] = result['total_variation_mean'].round(3).astype(str) + ' $\\pm$ ' + result['total_variation_std'].round(3).astype(str)
+result['crps'] = result['crps_mean'].round(3).astype(str) + ' $\\pm$ ' + result['crps_std'].round(3).astype(str)
+result['RMSE'] = result['RMSE_mean'].round(3).astype(str) + ' $\\pm$ ' + result['RMSE_std'].round(3).astype(str)
+
+# Define metrics and their display names
+metrics = {
+    'distortion': 'Distortion',
+    'total_variation': 'Total Variation',
+    'crps': 'CRPS',
+    'RMSE': 'RMSE'
+}
+
+# Create a single table with metrics as rows and methods as columns
+table_data = pd.DataFrame(index=metrics.values(), columns=result['model/name'].unique())
+
+# Fill the table with values
+for model in table_data.columns:
+    mask = (result['model/name'] == model)
+    if mask.any():
+        for metric_key, metric_name in metrics.items():
+            value = result.loc[mask, metric_key].values[0]
+            table_data.at[metric_name, model] = value
+
+# Format the table with bold and underline for lowest and second lowest values
+table_data = set_lowest_and_second_lowest_in_bold_and_underline(
+    table_data,
+)
+
+# Change the method names using methods_to_render_dict
+
+methods_to_render_dict = {
+    'timeGrad': '\\textbf{\\texttt{TimeGrad}}',
+    'tempflow': '\\textbf{\\texttt{TempFlow}}',
+    'transformer_tempflow': '\\textbf{\\texttt{Trf.TempFlow}}',
+    'tactis2': '\\textbf{\\texttt{Tactis2}}',
+    'timeMCL': '\\textbf{\\texttt{Time MCL}}',
+    'deepAR': '\\textbf{\\texttt{DeepAR}}',
+    'ETS': '\\textbf{\\texttt{ETS}}',
+    "timeMCLrelaxed-wta_0.1": "\\textbf{\\texttt{Time MCL (Rel.)}}",
+    "timeMCLawta": "\\textbf{\\texttt{Time MCL (Ann.)}}"}
+
+# Before renaming, print the current column names to debug
+print("Current column names:", table_data.columns.tolist())
+
+desired_order = [
+    'transformer_tempflow',
+    'tactis2',
+    'timeGrad',
+    'deepAR',
+    'tempflow',
+    'timeMCLawta',
+]
+
+# Filter out any columns that don't exist in the data
+desired_order = [col for col in desired_order if col in table_data.columns]
+
+# Reorder the columns
+table_data = table_data[desired_order]
+
+# Rename the columns using the mapping
+table_data.columns = table_data.columns.map(methods_to_render_dict)
+
+# Print the new column names to verify
+print("New column names:", table_data.columns.tolist())
+
+#%%
+
+# Convert to LaTeX
+str_table = table_data.to_latex(
+    escape=False,
+    column_format='l|' + 'c' * (len(table_data.columns)-1) + '|c',  # left align metric names, center values
+    index=True,
+    index_names=False
+)
+
+# Create the complete LaTeX table with caption and label
+caption = "Results for cryptocurrency dataset"
+label = "results_crypto"
+
+latex_table = f"""\\begin{{table}}
+\\begin{{center}}
+\\caption{{{caption}}}
+\\label{{tab:{label}}}
+\\resizebox{{\\columnwidth}}{{!}}{{
+{str_table}
+}}
+\\end{{center}}
+\\end{{table}}"""
+
+print("\nResults Table:")
+print(latex_table)
+print("\n" + "="*80 + "\n")
+
+#%%
+
+gray_first_two_columns = True
+
+# Add gray coloring to first two columns if requested
+if gray_first_two_columns:
+    # Split the table into lines
+    lines = latex_table.split('\n')
+    for i, line in enumerate(lines):
+        if '&' in line:  # Only process data rows
+            parts = line.split('&')
+            # Wrap first two columns in \textcolor{gray}{}
+            parts[1] = f"\\textcolor{{gray}}{{{parts[1].strip()}}}"
+            parts[2] = f"\\textcolor{{gray}}{{{parts[2].strip()}}}"
+            lines[i] = ' & '.join(parts)
+    latex_table = '\n'.join(lines)
+
+num_hypotheses_list = result['nb_hyp'].unique().astype(int)
+
+# Define the order you want
+methods_order = [
+    'timeGrad',
+    'deepAR',
+    'tempflow',
+    'transformer_tempflow',
+    'tactis2',
+    'timeMCL',
+]
+
+methods_to_render_dict = {
+    'timeGrad': '\\textbf{\\texttt{TimeGrad}}',
+    'tempflow': '\\textbf{\\texttt{TempFlow}}',
+    'transformer_tempflow': '\\textbf{\\texttt{Transf. TempFlow}}',
+    'tactis2': '\\textbf{\\texttt{Tactis2}}',
+    'timeMCL': '\\textbf{\\texttt{Time MCL}}',
+    'deepAR': '\\textbf{\\texttt{DeepAR}}',
+    'ETS': '\\textbf{\\texttt{ETS}}',
+}
+
+methods = [m for m in methods_order if m in result['model'].unique()]
+# methods = result['model'].unique()
+methods_to_render = [methods_to_render_dict[method] for method in methods]
+
+#%%
+
+# Create a dictionary to store the formatted time values for each dataset
+metric_df_dict = {}
+
+for dataset_name in result['dataset_name'].unique():
+    dataset_results = result[result['dataset_name'] == dataset_name]
+    
+    # Create a DataFrame to store formatted time values
+    metric_df = pd.DataFrame(index=num_hypotheses_list, columns=methods)
+    
+    for num_hyp in num_hypotheses_list:
+        for method in methods:
+            mask = (dataset_results['nb_hyp'] == num_hyp) & (dataset_results['model'] == method)
+            if mask.any():
+                mean = dataset_results.loc[mask, 'time_mean'].values[0]
+                std = dataset_results.loc[mask, 'time_std'].values[0]
+                # Format with mean ± std, rounded to 2 decimal places
+                metric_df.at[num_hyp, method] = f"{mean:.2f} $\\pm$ {std:.2f}"
+            else:
+                metric_df.at[num_hyp, method] = "N/A"
+    
+    metric_df_dict[dataset_name] = metric_df
+
+# Generate tables for each dataset
+for dataset_name in metric_df_dict:
+    # Create the table data
+    table_data = pd.DataFrame(index=num_hypotheses_list, columns=methods_to_render)
+    
+    for num_hyp in num_hypotheses_list:
+        for method in methods:
+            try:
+                value = metric_df_dict[dataset_name].loc[num_hyp, method]
+                if type(value) == str and 'nan' in value.split(' $\\pm$')[0]:
+                    table_data.at[num_hyp, methods_to_render_dict[method]] = 'N/A'
+                else:
+                    table_data.at[num_hyp, methods_to_render_dict[method]] = value
+            except KeyError:
+                table_data.at[num_hyp, methods_to_render_dict[method]] = 'N/A'
+
+    # Format the table with bold and underline for lowest and second lowest values
+    table_data = set_lowest_and_second_lowest_in_bold_and_underline(table_data, exclude_methods=['\\textbf{\\texttt{ETS}}'])
+    
+    # Convert to LaTeX
+    str_table = table_data.to_latex(escape=False,column_format='c' * len(table_data.columns))
+
+    # Add vertical bar before the last column
+    # First, find where the column specification starts and ends
+    first_brace = str_table.find('{')
+    col_start = str_table.find('{', first_brace + 1) + 1  # Find second occurrence
+    col_end = str_table.find('}', col_start)
+    col_spec = str_table[col_start:col_end]
+    
+    # Count the number of columns (number of 'l' characters)
+    num_cols = len(col_spec)
+    
+    # Insert the vertical bar before the last column
+    new_col_spec = col_spec[:-1] + '||' + col_spec[-1]
+    
+    # Replace the original column specification
+    str_table = str_table.replace(f'{{{col_spec}}}', f'{{{new_col_spec}}}')
+
+    # Create the complete LaTeX table with caption and label
+    caption = f"Computation time (in seconds) for {dataset_name} dataset"
+    label = f"computation_time_{dataset_name.lower()}"
+    
+    latex_table = f"""\\begin{{table}}
+    \\begin{{center}}
+    \\caption{{{caption}}}
+    \\label{{tab:{label}}}
+    \\resizebox{{\\columnwidth}}{{!}}{{
+    {str_table}
+    }}
+    \\end{{center}}
+    \\end{{table}}"""
+
+    # print(latex_table)
+
+    gray_first_two_columns = True
+
+    # Add gray coloring to first two columns if requested
+    if gray_first_two_columns:
+        # Split the table into lines
+        lines = latex_table.split('\n')
+        for i, line in enumerate(lines):
+            if '&' in line:  # Only process data rows
+                parts = line.split('&')
+                # Wrap first two columns in \textcolor{gray}{}
+                parts[1] = f"\\textcolor{{gray}}{{{parts[1].strip()}}}"
+                parts[2] = f"\\textcolor{{gray}}{{{parts[2].strip()}}}"
+                parts[3] = f"\\textcolor{{gray}}{{{parts[3].strip()}}}"
+                lines[i] = ' & '.join(parts)
+        latex_table = '\n'.join(lines)
+# %%
+
+import pandas as pd
+
+csv_files = os.listdir(os.path.join(os.environ['PROJECT_ROOT'], 'tsExperiments', 'results', 'saved_csv'))
+csv_path = [e for e in csv_files if 'crypt_101' in e]
+csv_file = os.path.join(os.environ['PROJECT_ROOT'], 'tsExperiments', 'results', 'saved_csv', csv_path[0])
+
+df_flops = pd.read_csv(csv_file)
+
+df_flops = df_flops[['model/name', 'prediction_flops']]
+
+df_flops = df_flops.T
+
+df_flops.columns = df_flops.iloc[0]
+# Remove the first row
+df_flops = df_flops.iloc[1:]
+
+desired_order = [
+    'ETS',
+    'transformer_tempflow',
+    'tactis2',
+    'timeGrad',
+    'deepAR',
+    'tempflow',
+    'timeMCL',
+]
+
+# Filter out any columns that don't exist in the data
+desired_order = [col for col in desired_order if col in df_flops.columns]
+
+# Reorder the columns
+df_flops = df_flops[desired_order]
+
+# Rename the columns using the mapping
+df_flops.columns = df_flops.columns.map(methods_to_render_dict)
+
+# Write the flops in scientific notation \times 10^
+df_flops = df_flops.applymap(lambda x: f"{x:.2e}")
+
+# Transform the e+0x to \times 10^x
+df_flops = df_flops.applymap(lambda x: x.replace('e+0', ' \\times 10^{'))
+df_flops = df_flops.applymap(lambda x: x + '}')
+
+a = df_flops.to_latex(escape=False)
+# %%

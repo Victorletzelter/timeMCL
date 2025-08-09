@@ -94,25 +94,32 @@ The environment variable ENV_DIR should then be set. After running the setup scr
 source $ENV_DIR/bin/activate
 ```
 
+The gluonts datasets (`electricity`, `exchange`, `solar`, `taxi`, `traffic`, `wiki`) will be downloaded automatically under `~/.gluonts/datasets` when calling for the first time the `get_dataset` function from gluonts. These datasets, along with the hourly crypto-currency dataset used in Section 6.4 and Appendix C.4 can be downloaded with: 
+```bash
+python download_datasets.py
+```
+
 ### Training
 
-To train timeMCL with 16 hypotheses on all datasets (`'electricity'`, `'exchange'`, `'solar'`, `'taxi'`, `'traffic'`, `'wiki'`) using seed 3141, and with annealed and relaxed variants (with default parameters), use the following commands:
+To train timeMCL with 16 hypotheses on the datasets (`electricity`, `exchange`, `solar`, `taxi`, `traffic`, `wiki`) using seed 3141, and with annealed and relaxed variants (with default parameters). You can set `num_hyps=16`, `seed=3141`, `datasets=all` and run the following commands:
 
 ```shell
-bash train.sh 3141 all timeMCL 16 awta # For the annealed variant
-bash train.sh 3141 all timeMCL 16 relaxed-wta # For the relaxed variant
+bash train.sh $seed $datasets timeMCL $num_hyps awta # For the annealed variant
+bash train.sh $seed $datasets timeMCL $num_hyps relaxed-wta # For the relaxed variant
 ```
 
-To train the different baselines, on all the datasets with seed 3141 use the following commands:
+To train the different baselines, on all the datasets use the following commands:
 
 ```shell
-bash train.sh 3141 all tempflow
-bash train.sh 3141 all tactis2
-bash train.sh 3141 all timeGrad
-bash train.sh 3141 all ETS
-bash train.sh 3141 all deepAR
-bash train.sh 3141 all transformer_tempflow
+bash train.sh $seed $datasets tempflow
+bash train.sh $seed $datasets tactis2
+bash train.sh $seed $datasets timeGrad
+bash train.sh $seed $datasets ETS
+bash train.sh $seed $datasets deepAR
+bash train.sh $seed $datasets transformer_tempflow
 ```
+
+The experiment on the crypto-currency dataset can be run with the above commands by setting `num_hyps=4` and `datasets=crypt`.
 
 If you have the resources, you can run the above trainings with several seeds, to be able to compute standard deviations on the scores of each baseline.
 
@@ -160,22 +167,20 @@ Then, a json file named `ckpts.json` and containing the checkpoint paths will be
 
 #### Inference, metrics computation and results extraction
 
-In this case, the full evaluation can be performed by first installing `jq`, e.g., with `sudo apt-get update ; sudo apt-get install jq -y --fix-missing`. Then, the evaluation scripts for checkpoints trained with 16 hypotheses and seed 3141 can be launched:
-
+In this case, the full evaluation can be performed by first installing `jq`, e.g., with `sudo apt-get update ; sudo apt-get install jq -y --fix-missing`. Then, having `seed`, `num_hyps` and `datasets` defined the evaluation scripts can be launched
 ```shell
-bash eval.sh 3141 all timeMCL 16 awta
-bash eval.sh 3141 all timeMCL 16 relaxed-wta
+bash eval.sh $seed $datasets $timeMCL $num_hyps awta
+bash eval.sh $seed $datasets $timeMCL $num_hyps relaxed-wta
 ```
 and for the baselines:
 ```shell
-bash eval.sh 3141 all tempflow 16
-bash eval.sh 3141 all tactis2 16
-bash eval.sh 3141 all timeGrad 16
-bash eval.sh 3141 all deepAR 16
-bash eval.sh 3141 all transformer_tempflow 16
+bash eval.sh $seed $datasets $tempflow $num_hyps
+bash eval.sh $seed $datasets $tactis2 $num_hyps
+bash eval.sh $seed $datasets $timeGrad $num_hyps
+bash eval.sh $seed $datasets $deepAR $num_hyps
+bash eval.sh $seed $datasets $transformer_tempflow $num_hyps
 ```
-
-To launch those scripts with the four random states provided in the checkpoints replace `3141` by `all_seeds` (e.g., with `bash eval.sh all_seeds all timeMCL 16 awta`). Update the `all_seeds` arrays in `eval.sh` accordingly if you ran the trainings by yourself.
+To launch those scripts with the four random states provided in the checkpoints by settings `seed=all_seeds` (e.g., with `bash eval.sh all_seeds all timeMCL 16 awta`). Update the `all_seeds` arrays in `eval.sh` accordingly if you ran the trainings by yourself.
 
 The results can then be visualized with the integrated MLFLow logger. To do so, please move to the created MLFLow dir with `cd tsExperiments/logs/mlflow`. To do so, please define a port number, e.g., `PORT=5066`. Then, run 
 ```shell
@@ -189,21 +194,21 @@ bash extract_results.sh
 ```
 To generate LaTeX tables from these results, run:
 ```shell
-bash extract_tables.py
+python extract_tables.py
 ``` 
 The LaTeX tables will then be generated in `latex_tables_output.txt`.
 
 #### Visualisation
 
-To reproduce visualisations from Figures 3, 7 and 8, first, you need to have run inference with the arg `model.plot_forecasts=True`. We provide a script to run the required inference (without computing the metrics) for each baseline, that can be run by first setting a seed number to plot (e.g., seed=42), and run it with:
+To reproduce visualisations from Figures 3, 7 and 8, first, you need to have run inference with the arg `model.plot_forecasts=True`. We provide a script to run the required inference (without computing the metrics) for each baseline, that can be run by first setting a seed number to plot (e.g., seed=3141), and run it with:
 ```bash
 cd tsExperiments/viz_scripts
-bash viz_scripts $seed timeMCL awta
-bash viz_scripts $seed timeMCL relaxed-wta
-bash viz_scripts $seed tempflow
-bash viz_scripts $seed tactis2
-bash viz_scripts $seed timeGrad
-bash viz_scripts $seed transformer_tempflow
+bash viz_scripts.sh $seed timeMCL awta
+bash viz_scripts.sh $seed timeMCL relaxed-wta
+bash viz_scripts.sh $seed tempflow
+bash viz_scripts.sh $seed tactis2
+bash viz_scripts.sh $seed timeGrad
+bash viz_scripts.sh $seed transformer_tempflow
 ```
 
 Then run 
@@ -213,9 +218,22 @@ python plotting.py
 ```
 The Figures will be saved in `logs/plots/{dataset_name}`.
 
+To reproduce the Figures 4 and 6 from the crypto-currency dataset, run:
+```shell
+cd tsExperiments/scripts_plot
+bash scripts.sh
+```
+Then run: 
+```bash
+cd tsExperiments
+python plot_crypt.py 
+python plot_crypt_grid.py
+```
+The 
+
 #### Computational cost evaluation
 
-We provide a dedicated script, `flops.sh` to compute floating point operations (with randomly initialized models). It can be executed as `bash flops.sh`.
+We provide a dedicated script, `flops.sh` in `tsExperiments/computation_flops` to compute floating point operations (with randomly initialized models). It can be executed as `cd tsExperiments/computation_flops ; bash flops.sh`.
 We performed runtime evaluation on a single NVIDIA GeForce RTX 2080 Ti. To evaluate runtime with your own machine, please execute the following script:
 
 ```shell

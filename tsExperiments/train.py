@@ -25,7 +25,6 @@ from tsExperiments.models.project_models.deepAR.estimator import (
 from tsExperiments.models.project_models.tempflow.tempFlow_estimator import (
     TempFlowEstimator,
 )
-from tsExperiments.utils.logging_utils import LoggerManager
 from tsExperiments.utils.utils import compute_metric_forecast
 from gluonts.evaluation.backtest import make_evaluation_predictions
 from gluonts.dataset.repository import get_dataset
@@ -49,43 +48,58 @@ def main(cfg: DictConfig):
 
     pl.seed_everything(cfg.seed)
 
-    try:
-        dataset = get_dataset(
-            cfg.data.train.dataset_name, regenerate=False, path=cfg.paths.dataset_path
+    if cfg.data.train.type == "Gluonts_ds":
+        try:
+            dataset = get_dataset(
+                cfg.data.train.dataset_name, regenerate=False, path=cfg.paths.dataset_path
+            )
+            metadata = dataset.metadata
+        except:
+            dataset = get_dataset(cfg.data.train.dataset_name, regenerate=True)
+            metadata = dataset.metadata
+        target_dim = min(2000, int(metadata.feat_static_cat[0].cardinality))
+
+        train_grouper = MultivariateGrouper(
+            max_target_dim=target_dim
         )
-        metadata = dataset.metadata
-    except:
-        dataset = get_dataset(cfg.data.train.dataset_name, regenerate=True)
-        metadata = dataset.metadata
-    target_dim = min(2000, int(metadata.feat_static_cat[0].cardinality))
-
-    train_grouper = MultivariateGrouper(
-        max_target_dim=target_dim
-    )
-    test_grouper = MultivariateGrouper(
-        num_test_dates=int(len(dataset.test) / len(dataset.train)),
-        max_target_dim=target_dim,
-    )
-    log.info(
-        f"Using {int(len(dataset.test)/len(dataset.train))} rolling windows for testing"
-    )
-
-    dataset_train = train_grouper(dataset.train)
-    dataset_test = test_grouper(dataset.test)
-
-    if cfg.model.name == "ETS":
-        cfg.data.train.split_train_val = False
-
-    if "split_train_val" in cfg.data.train and cfg.data.train.split_train_val:
-        log.info("Splitting train and validation datasets")
-        dataset_train, dataset_val = split_train_val(
-            dataset_name=cfg.data.train.dataset_name,
-            grouped_train=dataset_train,
-            n_pred_steps_val=cfg.data.train.n_pred_steps_val,
+        test_grouper = MultivariateGrouper(
+            num_test_dates=int(len(dataset.test) / len(dataset.train)),
+            max_target_dim=target_dim,
         )
+        log.info(
+            f"Using {int(len(dataset.test)/len(dataset.train))} rolling windows for testing"
+        )
+
+        dataset_train = train_grouper(dataset.train)
+        dataset_test = test_grouper(dataset.test)
+
+        if cfg.model.name == "ETS":
+            cfg.data.train.split_train_val = False
+
+        if "split_train_val" in cfg.data.train and cfg.data.train.split_train_val:
+            log.info("Splitting train and validation datasets")
+            dataset_train, dataset_val = split_train_val(
+                dataset_name=cfg.data.train.dataset_name,
+                grouped_train=dataset_train,
+                n_pred_steps_val=cfg.data.train.n_pred_steps_val,
+            )
+
+    elif cfg.data.train.type == "financial_data":
+        from tsExperiments.stock_market_data.data_processors.creating_dataset import YahooFinanceDataset
+        log.info(f'Loading data, ticker list: {cfg.data.crypto_tickers}')
+        if cfg.data.load_from_csv:
+            dataLoader = YahooFinanceDataset(cfg.data.start_date,cfg.data.end_date,time_interval="60m",ticker_list=list(cfg.data.crypto_tickers), adress_to_save_file=cfg.data.save_path, load_from_csv=True, load_from_csv_path=cfg.data.load_from_csv_path)
+        else:
+            dataLoader = YahooFinanceDataset(cfg.data.start_date,cfg.data.end_date,time_interval="60m",ticker_list=list(cfg.data.crypto_tickers), adress_to_save_file=cfg.data.save_path)
+        dataset_train = dataLoader.creating_train_or_val_dataset(start_date=cfg.data.train.start_date,end_date=cfg.data.train.end_date)
+        dataset_val = dataLoader.creating_train_or_val_dataset(start_date=cfg.data.valid.start_date,end_date=cfg.data.valid.end_date)
+        dataset_test = dataLoader.creating_test_dataset(start_date=cfg.data.test.start_date,end_date=cfg.data.test.end_date,num_tests=cfg.data.test.num_tests)
+        metadata = dataLoader.generating_metaData()
+        target_dim=min(2000,int(metadata.feat_static_cat[0].cardinality))
+
+        log.info(f'Financial data successfully loaded')
 
     logger: List[Logger] = instantiate_loggers(cfg.get("logger"))
-    logger_manager = LoggerManager(logger)
     callbacks = instantiate_callbacks(cfg.callbacks)
 
     trainer_kwargs = {}
@@ -232,10 +246,10 @@ def main(cfg: DictConfig):
         log.info(f"Training the model")
         if cfg.model.name == "ETS":
             estimator.fit(dataset_train)
-        elif "split_train_val" in cfg.data.train and cfg.data.train.split_train_val:
+        elif "split_train_val" in cfg.data.train :
             predictor = estimator.train(
                 training_data=dataset_train,
-                validation_data=dataset_val,
+                validation_data=dataset_val if not cfg.data.discard_validation else None,
                 ckpt_path=cfg.ckpt_path if cfg.ckpt_path is not None else None,
             )
         else:
@@ -244,7 +258,7 @@ def main(cfg: DictConfig):
                 ckpt_path=cfg.ckpt_path if cfg.ckpt_path is not None else None,
             )
 
-    if cfg.data.train.type == "Gluonts_ds" and cfg.test is True:
+    if (cfg.data.train.type == "Gluonts_ds" and cfg.test is True) or (cfg.data.train.type == "financial_data" and cfg.test is True):
         log.info(f"Evaluating the model")
         if cfg.model.name == "ETS":
             targets = creating_target_list(dataset_test)
@@ -352,12 +366,43 @@ def main(cfg: DictConfig):
             plot_mean=True,
             freq_type=metadata.freq,
             save_path=cfg.paths.output_dir,
-            is_mcl=is_mcl,  # Pass the model type
-            extract_unique=is_mcl,  # Only extract unique forecasts for timeMCL
+            is_mcl=is_mcl,
+            extract_unique=is_mcl,
         )
 
+    if cfg.visualize_specific_date is True:
+        from tsExperiments.train_viz import plotting_from_a_date,creating_target_list,plot_forecasts_for_dimension
+        test_data = dataLoader.creating_test_dataset(start_date=cfg.start_date_viz,end_date=cfg.end_date_viz,num_tests=1)
+        targets_loaded = creating_target_list(test_data) 
+        if cfg.model.name == "timeMCL":
+            contexte_df, forecast_array,start_date,probabilities = plotting_from_a_date(date_of_pred=cfg.date_of_pred,
+                                                                        plot_context_size=metadata.prediction_length,
+                                                                        target_list=targets_loaded,
+                                                                        pred_length=metadata.prediction_length,
+                                                                        trained_model=predictor,
+                                                                        num_samples=1000,
+                                                                        is_mcl = True) 
+        else:
+             contexte_df, forecast_array,start_date,probabilities = plotting_from_a_date(date_of_pred=cfg.date_of_pred,
+                                                                        plot_context_size=metadata.prediction_length,
+                                                                        target_list=targets_loaded,
+                                                                        pred_length=metadata.prediction_length,
+                                                                        trained_model=predictor,
+                                                                        num_samples=cfg.model.params.num_hypotheses,
+                                                                        is_mcl = False)
+
+        # for dimension_to_plot in [1,2,5,13]:
+        for dimension_to_plot in [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14]:
+            model_name = cfg.model.name
+            fig_path = f"{os.environ['PROJECT_ROOT']}/tsExperiments/scripts_plot/{model_name}/{dimension_to_plot}" 
+            # fig_path = f"{os.environ['PROJECT_ROOT']}/tsExperiments/logs/plots/{model_name}/{dimension_to_plot}" 
+            # mkdir the folder if it doesn't exist
+            if not os.path.exists(fig_path):
+                os.makedirs(fig_path)
+            plot_forecasts_for_dimension(contexte_df, forecast_array, start_date, target=dimension_to_plot, freq=None, save_path=fig_path,probabilities = probabilities, pkl_path_name=f"{dimension_to_plot}")
+
     if cfg.model.compute_flops:
-        from flops_computation import count_flops_for_predictions
+        from tsExperiments.computation_flops.flops_computation import count_flops_for_predictions
 
         log.info("Computing FLOPs")
         if (
