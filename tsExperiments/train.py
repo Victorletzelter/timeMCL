@@ -324,7 +324,7 @@ def main(cfg: DictConfig):
             forecasts = list(forecast_it)
             targets = list(ts_it)
 
-        from plottimeMCL import plot_mcl
+        from tsExperiments.scripts_plot.plottimeMCL import plot_mcl
 
         target_df = targets[0]
         hypothesis_forecasts = forecasts[
@@ -371,7 +371,7 @@ def main(cfg: DictConfig):
         )
 
     if cfg.visualize_specific_date is True:
-        from tsExperiments.train_viz import plotting_from_a_date,creating_target_list,plot_forecasts_for_dimension
+        from tsExperiments.scripts_plot.train_viz import plotting_from_a_date,creating_target_list,plot_forecasts_for_dimension
         test_data = dataLoader.creating_test_dataset(start_date=cfg.start_date_viz,end_date=cfg.end_date_viz,num_tests=1)
         targets_loaded = creating_target_list(test_data) 
         if cfg.model.name == "timeMCL":

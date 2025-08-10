@@ -1,4 +1,4 @@
-# Code for *Winner-Takes-All for Multivariate Probabilistic Time Series Forecasting* (ICML 2025)
+# Winner-Takes-All for Multivariate Probabilistic Time Series Forecasting (ICML 2025)
 
 This repository contains the source code associated with the publication *Winner-Takes-All for Multivariate Probabilistic Time Series Forecasting* (ICML 2025). 
 
@@ -9,30 +9,30 @@ We introduce **TimeMCL**, a method leveraging the Multiple Choice Learning (MCL)
 
 </br>
 
-## Repository Structure
+## 📁 Repository Structure
 
 ```shell
-└── demo # Notebooks for fast demos
-└── toy # Code for reproducing the experiments with synthetic data
-└── tsExperiments # Code for reproducing the experiments with real world datasets
+└── demo # Quick start notebooks
+└── toy # Synthetic data experiments
+└── tsExperiments # Real-world dataset
 ```
 
-## Fast Demo
+## 🚀 Fast Demo 
 
 For quick prototyping, we provide a notebook in [TimeMCL-Solar.ipynb](demo/TimeMCL-Solar.ipynb) for training, inference, evaluation, and plotting on real-world time series data. A similar demonstration for synthetic data experiments is available in [toy.ipynb](demo/toy.ipynb).
 
-## Synthetic Data Experiments
+## 🔥 Synthetic Data Experiments
 
 This part of the code focuses on **toy experiments** with synthetic data. These toy experiments help illustrate the *TimeMCL* model's underlying theory and demonstrate, using controlled examples, how *TimeMCL* acts as a functional quantizer for stochastic processes.
 
-### Datasets
+### 🗃️ Datasets
 
 The synthetic experiments use three types of datasets:
 - **ARp**: Autoregressive process of order p
 - **Brownian Motion**: Standard Brownian motion process
 - **Brownian Bridge**: Brownian bridge process
 
-### Setup
+### 🔨 Setup
 
 If you have conda, you can create an environment with:
 
@@ -55,7 +55,7 @@ pip install -r requirements.txt
 
 LaTeX can optionally be used for plot rendering. Install it with: `sudo apt-get install -y dvipng texlive-latex-extra texlive-fonts-recommended cm-super`.
 
-### Training and Inference
+### 🔄 Training and Inference
 
 For training TimeMCL on the synthetic datasets, run:
 
@@ -77,9 +77,9 @@ The figure will be stored in `toy/figures/toy_figure.png`.
 
 ![Conditional Quantization of Stochastic Processes with TimeMCL.](./toy/figures/toy_figure.png)
 
-## Real Datasets Experiments
+## 🔥 Real Datasets Experiments
 
-### Setup
+### 🔨 Setup
 
 To reproduce the experiments on real-world datasets, you can set up an environment as follows. This setup assumes you have Python3 installed (we used Python 3.10.15).
 
@@ -99,7 +99,7 @@ The gluonts datasets (`electricity`, `exchange`, `solar`, `taxi`, `traffic`, `wi
 python download_datasets.py
 ```
 
-### Training
+### 🔄 Training
 
 To train timeMCL with 16 hypotheses on the datasets (`electricity`, `exchange`, `solar`, `taxi`, `traffic`, `wiki`) using seed 3141, and with annealed and relaxed variants (with default parameters). You can set `num_hyps=16`, `seed=3141`, `datasets=all` and run the following commands:
 
@@ -138,11 +138,11 @@ When launching the above trainings, the logs will be saved in `tsExperiments/log
           └── tensorboard # Folder that contains tensorboard event files. 
 ```
 
-### Inference and evaluation
+### 🔄 Inference and evaluation
 
-#### Trained models checkpoints path extraction 
+#### 📥 Trained models checkpoints path extraction 
 
-If you performed the training above, the checkpoints should be stored in `tsExperiments/logs`. In case you just want to launch evaluation with our models, we provide a Google Drive link with a folder containing our trained models, that should be placed in `tsExperiments/logs`.
+If you performed the training above, the checkpoints should be stored in `tsExperiments/logs`. In case you just want to launch evaluation with our models, the later can be downloaded with `python tsExperiments/download_ckpts.py`.
 
 The general command to evaluate a model with a given checkpoint path, the command takes this form (except for tactis2):
 
@@ -160,12 +160,13 @@ For Tactis2, instead of `ckpt_path`, set `ckpt_path_phase1` and `ckpt_path_phase
 To avoid the burden of extracting each checkpoint path by hand, we provide `extract_ckpts.py`, a python script to automate checkpoint path extraction. It can be executed by running:
 
 ```shell
-python extract_ckpts.py 
+cd extract
+python extract_ckpts.py --log_dir=tsExperiments/logs
 ```
 
-Then, a json file named `ckpts.json` and containing the checkpoint paths will be created in the folder `tsExperiments/`.
+where `--log_dir` specifices the logging directories. Then, a json file named `ckpts.json` and containing the checkpoint paths will be created in the folder `tsExperiments/`.
 
-#### Inference, metrics computation and results extraction
+#### 📊 Inference, metrics computation and results extraction
 
 In this case, the full evaluation can be performed by first installing `jq`, e.g., with `sudo apt-get update ; sudo apt-get install jq -y --fix-missing`. Then, having `seed`, `num_hyps` and `datasets` defined the evaluation scripts can be launched
 ```shell
@@ -190,6 +191,7 @@ The results can then be analyzed in `http://localhost:{PORT}/`.
 
 The full results will be downloaded as csv files (one for each dataset) in `tsExperiments/results/saved_csv` by running 
 ```shell
+cd extract
 bash extract_results.sh
 ```
 To generate LaTeX tables from these results, run:
@@ -198,11 +200,11 @@ python extract_tables.py
 ``` 
 The LaTeX tables will then be generated in `latex_tables_output.txt`.
 
-#### Visualisation
+#### 📈 Visualisation
 
 To reproduce visualisations from Figures 3, 7 and 8, first, you need to have run inference with the arg `model.plot_forecasts=True`. We provide a script to run the required inference (without computing the metrics) for each baseline, that can be run by first setting a seed number to plot (e.g., seed=3141), and run it with:
 ```bash
-cd tsExperiments/viz_scripts
+cd tsExperiments/scripts_plot
 bash viz_scripts.sh $seed timeMCL awta
 bash viz_scripts.sh $seed timeMCL relaxed-wta
 bash viz_scripts.sh $seed tempflow
@@ -213,7 +215,7 @@ bash viz_scripts.sh $seed transformer_tempflow
 
 Then run 
 ```bash
-cd tsExperiments
+cd tsExperiments/scripts_plot
 python plotting.py
 ```
 The Figures will be saved in `logs/plots/{dataset_name}`.
@@ -225,13 +227,11 @@ bash scripts.sh
 ```
 Then run: 
 ```bash
-cd tsExperiments
 python plot_crypt.py 
 python plot_crypt_grid.py
 ```
-The 
 
-#### Computational cost evaluation
+#### ⚡ Computational cost evaluation
 
 We provide a dedicated script, `flops.sh` in `tsExperiments/computation_flops` to compute floating point operations (with randomly initialized models). It can be executed as `cd tsExperiments/computation_flops ; bash flops.sh`.
 We performed runtime evaluation on a single NVIDIA GeForce RTX 2080 Ti. To evaluate runtime with your own machine, please execute the following script:
@@ -242,7 +242,7 @@ cd tsExperiments/computation_time ; python evaluate_time.py
 
 The run-time results will be stored in `tsExperiments/computation_time/results/` and can be turned into a table by following the instructions in the `tsExperiments/computation_time/extract_table.py` file.
 
-### Acknowledgments
+### 👍 Acknowledgments
 
 This work was funded by the French Association for Technological Research (ANRT CIFRE contract 2022-1854) and the LISTEN Laboratory of Télécom Paris. It also benefited from access to the HPC resources of IDRIS (allocation 2024-AD011014345) by GENCI. We are grateful to the reviewers for their insightful comments.
 
@@ -262,14 +262,14 @@ This repository contains source code adapted from the following Github repositor
 
 [Hydra](https://github.com/facebookresearch/hydra) (under MIT License)
 
-### Contribution
+### 🤝 Contribution
 
 We welcome contributions! Please feel free to:
 - Submit issues for bugs or difficulties
 - Create pull requests for improvements
 - Suggest better organization or efficiency improvements
 
-### Citation
+### ✏️ Citation
 
 If our work helped in your research, feel free to give us a star ⭐ or to cite us with the following bibtex code:
 

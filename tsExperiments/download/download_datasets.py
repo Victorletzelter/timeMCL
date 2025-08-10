@@ -16,7 +16,7 @@ for dataset in ['electricity_nips', 'exchange_rate_nips', 'solar_nips', 'taxi_30
 
 url= "https://drive.google.com/file/d/1GUsRSb1P4GMPJ1F3LxUfXhpVdDvShKCH/view?usp=sharing"
 
-# Convert to downloadable format (gdown does this automatically, but you can make it explicit)
+# Convert to downloadable format
 file_id = url.split("/d/")[1].split("/")[0]
 download_url = f"https://drive.google.com/uc?id={file_id}"
 

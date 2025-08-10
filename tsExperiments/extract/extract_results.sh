@@ -14,7 +14,7 @@ fi
 
 mkdir saved_csv
 
-cd ${PROJECT_ROOT}/tsExperiments/
+cd ${PROJECT_ROOT}/tsExperiments/download
 
 for dataset_name in "${datasets[@]}"
 do

@@ -15,3 +15,4 @@ tsExperiments/results/
 *.json
 
 tsExperiments/scripts_plot/*.png
+tsExperiments/logs_timeMCL/
