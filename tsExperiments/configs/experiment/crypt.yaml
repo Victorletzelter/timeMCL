@@ -1,0 +1,56 @@
+# @package _global_
+
+data:
+  save_path: "${oc.env:PROJECT_ROOT}/tsExperiments/data/"
+
+  crypto_tickers:
+      - "BTC-USD"  # Bitcoin
+      - "ETH-USD"  # Ethereum
+      - "XRP-USD"  # Ripple
+      - "LTC-USD"  # Litecoin
+      - "BCH-USD"  # Bitcoin Cash
+      - "ADA-USD"  # Cardano
+      - "DOGE-USD" # Dogecoin
+      - "SOL-USD"  # Solana
+      - "LINK-USD" # Chainlink
+      - "MATIC-USD" # Polygon
+      - "XLM-USD"  # Stellar
+      - "ETC-USD"  # Ethereum Classic
+      - "XMR-USD"  # Monero
+      - "EOS-USD"  # EOS
+      - "VET-USD"   # VeChain
+
+  num_batches_per_epoch: 100
+  num_batches_val_per_epoch: 80
+  batch_size: 64
+  shuffle_buffer_length: Null
+  start_date: "2023-07-01" #global start date of the stock market data 
+  end_date: "2025-03-01" #global end date 
+  train:
+    type: "financial_data"
+    split_train_val: true
+    n_pred_steps_val: 10 # number of step of validation (as a factor of the prediction length)
+    num_feat_dynamic_real: 4
+    start_date: "2023-07-01" #start date for the train 
+    end_date: "2024-09-01" #end date for the train 
+  valid:
+    start_date: "2024-09-02" #start date for the val
+    end_date: "2024-12-05" #end date for the val
+  test:
+    start_date: "2024-12-06"
+    end_date: "2025-03-01"
+    num_tests: 4 
+
+  load_from_csv: true
+  load_from_csv_path: "${oc.env:PROJECT_ROOT}/tsExperiments/data/crypto_data.csv"
+
+trainer:
+  max_epochs: 101
+
+run_name: "yahoo_crypt_${trainer.max_epochs}"
+
+task_name: "crypt_${trainer.max_epochs}"
+
+logger:
+  mlflow:
+    experiment_name: "crypt_${trainer.max_epochs}"

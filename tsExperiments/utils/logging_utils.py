@@ -10,27 +10,6 @@ log = pylogger.RankedLogger(__name__, rank_zero_only=True)
 from typing import List, Dict, Any
 from lightning.pytorch.loggers import Logger
 
-
-class LoggerManager:
-    def __init__(self, loggers: List[Logger]):
-        self.loggers = loggers
-
-    def log_metrics(self, metrics: Dict[str, Any], step: Optional[int] = None):
-        for logger in self.loggers:
-            logger.log_metrics(metrics, step)
-
-    def log_hyperparams(self, params: Dict[str, Any]):
-        for logger in self.loggers:
-            logger.log_hyperparams(params)
-
-    def log_predictions(self, tag: str, predictions: Dict[str, Any], step: int):
-        for logger in self.loggers:
-            if hasattr(logger, "experiment") and hasattr(
-                logger.experiment, "add_scalars"
-            ):
-                logger.experiment.add_scalars(tag, predictions, step)
-
-
 @rank_zero_only
 def log_hyperparameters(object_dict: Dict[str, Any], logger_list: List[Logger]) -> None:
     """Controls which config parts are saved by Lightning loggers.

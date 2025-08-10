@@ -182,15 +182,9 @@ class PyTorchLightningEstimator(Estimator):
         )
         custom_callbacks = self.trainer_kwargs.pop("callbacks", [])
 
-        if (
-            validation_data is None
-        ):  # in this case, we only want to save the last model, and we use the checkpoint callback
-            all_callbacks = [checkpoint] + custom_callbacks
-        else:  # in this case, we want to save the best model (and optionally the last model), and we use our own callback
-            all_callbacks = custom_callbacks
+        all_callbacks = [checkpoint] + custom_callbacks
 
         validation_only = self.trainer_kwargs.pop("validation_only", False)
-        # is_tactis = self.trainer_kwargs.pop("is_tactis", False)
 
         trainer = pl.Trainer(
             **{
@@ -217,9 +211,6 @@ class PyTorchLightningEstimator(Estimator):
                 ckpt_path=ckpt_path,
             )
 
-            # if is_tactis:
-            #     best_model = training_network
-            # else:
             if checkpoint.best_model_path != "":
                 logger.info(f"Loading best model from {checkpoint.best_model_path}")
                 best_model = training_network.__class__.load_from_checkpoint(

@@ -3,6 +3,9 @@ lightning_logs/
 checkpoints/
 __pycache__/
 tsExperiments/logs/
+tsExperiments/data/
+tsExperiments/results/
+.vscode/
 
 *.pth
 *.pkl
@@ -10,3 +13,6 @@ tsExperiments/logs/
 .cpy
 *.csv 
 *.json
+
+tsExperiments/scripts_plot/*.png
+tsExperiments/logs_timeMCL/

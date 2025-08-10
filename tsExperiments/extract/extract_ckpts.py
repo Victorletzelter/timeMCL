@@ -70,7 +70,9 @@ def parse_folder_name(
         # Handle both formats
         seed = parts[3]
         dataset_name = parts[4]
-        if "transformer" in parts and "tempflow" in parts:
+        if ("transformer" in parts and "tempflow" in parts) or (
+            "transformertempflow" in parts
+        ):
             model_name = "transformer_tempflow"
             num_hypotheses = parts[7]
         else:
@@ -127,19 +129,24 @@ def get_checkpoint_paths(folder_path: Path, model_name: str) -> List[str]:
                             # Rename the file
                             old_path.rename(new_path)
                             checkpoint_paths[phase] = str(new_path.absolute())
-                            # checkpoint_path = Path(root) / file
-                            # checkpoint_paths[phase] = str(checkpoint_path.absolute())
         return checkpoint_paths
     else:
         checkpoint_paths = []
         # Original behavior for other models
         for root, _, files in os.walk(folder_path):
             for file in files:
-                if file.endswith(".ckpt") and "last" not in file:
-                    checkpoint_path = Path(root) / file
-                    checkpoint_paths.append(str(checkpoint_path.absolute()))
+                if "crypt" in folder_path.name:
+                    ### For the crypto currency dataset, we use the last checkpoint, because the validation loss was found to be too noisy and 
+                    ### we did not observe overfitting (validation loss was not increasing).
+                    ### This could be solved in the future by increasing the validation set size.
+                    if file.endswith(".ckpt") and "last" in file:
+                        checkpoint_path = Path(root) / file
+                        checkpoint_paths.append(str(checkpoint_path.absolute()))
+                else:
+                    if file.endswith(".ckpt") and "last" not in file:
+                        checkpoint_path = Path(root) / file
+                        checkpoint_paths.append(str(checkpoint_path.absolute()))
         return checkpoint_paths
-
 
 def build_checkpoint_structure(
     base_log_dir: Path, start_date: datetime, datasets: List[str]
@@ -170,7 +177,10 @@ def build_checkpoint_structure(
             )
             continue
 
-        dataset_log_dir = dataset_log_dir / "runs"
+        if "runs" in os.listdir(dataset_log_dir):
+            dataset_log_dir = dataset_log_dir / "runs"
+        else:
+            dataset_log_dir = dataset_log_dir
 
         for folder in os.listdir(dataset_log_dir):
             folder_path = dataset_log_dir / folder
@@ -258,7 +268,7 @@ def main():
     parser.add_argument(
         "--datasets",
         type=str,
-        default="electricity_200,exchange_200,solar_200,taxi_200,traffic_200,wiki_200",
+        default="electricity_200,exchange_200,solar_200,taxi_200,traffic_200,wiki_200,crypt_101",
         help="Comma-separated list of dataset names",
     )
     parser.add_argument(

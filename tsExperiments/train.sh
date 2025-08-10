@@ -1,6 +1,5 @@
 #!/bin/bash
 declare -a num_hyps=('1')
-max_epochs=200
 scaler_type="mean"
 
 if [ $# -ge 1 ]; then
@@ -48,6 +47,28 @@ else
     wta_mode=None # Applicable only for timeMCL
 fi
 
+declare -A max_epochs_dict
+max_epochs_dict["crypt"]=101
+max_epochs_dict["electricity"]=200
+max_epochs_dict["exchange"]=200
+max_epochs_dict["solar"]=200
+max_epochs_dict["taxi"]=200
+max_epochs_dict["traffic"]=200
+max_epochs_dict["wiki"]=200
+
+declare -A scaler_type_dict
+scaler_type_dict["crypt"]="mean_std"
+scaler_type_dict["electricity"]="mean"
+scaler_type_dict["exchange"]="mean"
+scaler_type_dict["solar"]="mean"
+scaler_type_dict["taxi"]="mean"
+scaler_type_dict["traffic"]="mean"
+scaler_type_dict["wiki"]="mean"
+
+if [ $model == "deepAR" ]; then
+    scaler_type_dict["crypt"]="mean" #For deepAR, we retained mean scaler on crypt because it performs better than mean_std scaler.
+fi
+
 if [ $model == "timeMCL" ]; then
     if [ $wta_mode == "awta" ]; then
 
@@ -59,7 +80,8 @@ if [ $model == "timeMCL" ]; then
         wta_mode_params_wta_after_temperature_lim=True
 
         for dataset in "${datasets[@]}"; do
-            python train.py experiment=${dataset}.yaml model=${model}.yaml run_name=seed_${seed}_${dataset}_${model}_${num_hyp}_${wta_mode}_temp_ini_${wta_mode_params_temperature_ini}_decay_${wta_mode_params_temperature_decay}_scaler_${scaler_type} model.params.num_hypotheses=${num_hyp} logger.mlflow.experiment_name=${dataset}_${max_epochs} task_name=${dataset}_${max_epochs} model.params.wta_mode=${wta_mode} model.params.wta_mode_params.epsilon=${wta_mode_params_epsilon} model.params.wta_mode_params.temperature_ini=${wta_mode_params_temperature_ini} model.params.wta_mode_params.scheduler_mode=${wta_mode_params_scheduler_mode} model.params.wta_mode_params.temperature_decay=${wta_mode_params_temperature_decay} model.params.wta_mode_params.temperature_lim=${wta_mode_params_temperature_lim} model.params.wta_mode_params.wta_after_temperature_lim=${wta_mode_params_wta_after_temperature_lim} model.params.scaler_type=${scaler_type} trainer.max_epochs=${max_epochs}
+            max_epochs=${max_epochs_dict[$dataset]}
+            python train.py data=${dataset}.yaml experiment=${dataset}.yaml model=${model}.yaml run_name=seed_${seed}_${dataset}_${model}_${num_hyp}_${wta_mode}_temp_ini_${wta_mode_params_temperature_ini}_decay_${wta_mode_params_temperature_decay}_scaler_${scaler_type} model.params.num_hypotheses=${num_hyp} logger.mlflow.experiment_name=${dataset}_${max_epochs} task_name=${dataset}_${max_epochs} model.params.wta_mode=${wta_mode} model.params.wta_mode_params.epsilon=${wta_mode_params_epsilon} model.params.wta_mode_params.temperature_ini=${wta_mode_params_temperature_ini} model.params.wta_mode_params.scheduler_mode=${wta_mode_params_scheduler_mode} model.params.wta_mode_params.temperature_decay=${wta_mode_params_temperature_decay} model.params.wta_mode_params.temperature_lim=${wta_mode_params_temperature_lim} model.params.wta_mode_params.wta_after_temperature_lim=${wta_mode_params_wta_after_temperature_lim} model.params.scaler_type=${scaler_type} trainer.max_epochs=${max_epochs} test=False model.params.scaler_type=${scaler_type_dict[$dataset]}
         done
 
     elif [ $wta_mode == "relaxed-wta" ]; then
@@ -67,7 +89,8 @@ if [ $model == "timeMCL" ]; then
         wta_mode_params_epsilon=0.1
 
         for dataset in "${datasets[@]}"; do
-            python train.py experiment=${dataset}.yaml model=${model}.yaml run_name=seed_${seed}_${dataset}_${model}_${num_hyp}_${wta_mode}_epsilon_${wta_mode_params_epsilon}_scaler_${scaler_type} model.params.num_hypotheses=${num_hyp} logger.mlflow.experiment_name=${dataset}_${max_epochs} task_name=${dataset}_${max_epochs} model.params.wta_mode=${wta_mode} model.params.wta_mode_params.epsilon=${wta_mode_params_epsilon} model.params.scaler_type=${scaler_type} trainer.max_epochs=${max_epochs}
+            max_epochs=${max_epochs_dict[$dataset]}
+            python train.py data=${dataset}.yaml experiment=${dataset}.yaml model=${model}.yaml run_name=seed_${seed}_${dataset}_${model}_${num_hyp}_${wta_mode}_epsilon_${wta_mode_params_epsilon}_scaler_${scaler_type} model.params.num_hypotheses=${num_hyp} logger.mlflow.experiment_name=${dataset}_${max_epochs} task_name=${dataset}_${max_epochs} model.params.wta_mode=${wta_mode} model.params.wta_mode_params.epsilon=${wta_mode_params_epsilon} model.params.scaler_type=${scaler_type} trainer.max_epochs=${max_epochs} test=False
         done
 
     else
@@ -75,8 +98,19 @@ if [ $model == "timeMCL" ]; then
         echo "Error: Invalid wta_mode"
         exit 1
     fi
+elif [ $model == "ETS" ]; then
+    for dataset in "${datasets[@]}"; do
+        max_epochs=${max_epochs_dict[$dataset]}
+        python train.py data=${dataset}.yaml experiment=${dataset}.yaml model=${model}.yaml run_name=seed_${seed}_${dataset}_${model}_${num_hyp} model.params.num_hypotheses=${num_hyp} logger.mlflow.experiment_name=eval_${dataset}_${max_epochs} task_name=eval_${dataset}_${max_epochs} trainer.max_epochs=${max_epochs} seed=${seed} test=True
+    done
+elif [ $model == "tactis2" ]; then
+    for dataset in "${datasets[@]}"; do
+        max_epochs=${max_epochs_dict[$dataset]}
+        python train.py data=${dataset}.yaml experiment=${dataset}.yaml model=${model}.yaml run_name=seed_${seed}_${dataset}_${model}_${num_hyp} model.params.num_hypotheses=${num_hyp} logger.mlflow.experiment_name=train_${dataset}_${max_epochs} task_name=${dataset}_${max_epochs} trainer.max_epochs=${max_epochs} seed=${seed} test=False
+    done
 else
     for dataset in "${datasets[@]}"; do
-        python train.py experiment=${dataset}.yaml model=${model}.yaml run_name=seed_${seed}_${dataset}_${model}_${num_hyp} model.params.num_hypotheses=${num_hyp} logger.mlflow.experiment_name=train_${dataset}_${max_epochs} task_name=${dataset}_${max_epochs} trainer.max_epochs=${max_epochs} seed=${seed}
+        max_epochs=${max_epochs_dict[$dataset]}
+        python train.py data=${dataset}.yaml experiment=${dataset}.yaml model=${model}.yaml run_name=seed_${seed}_${dataset}_${model}_${num_hyp} model.params.num_hypotheses=${num_hyp} logger.mlflow.experiment_name=train_${dataset}_${max_epochs} task_name=${dataset}_${max_epochs} trainer.max_epochs=${max_epochs} seed=${seed} test=False model.params.scaler_type=${scaler_type_dict[$dataset]}
     done
 fi

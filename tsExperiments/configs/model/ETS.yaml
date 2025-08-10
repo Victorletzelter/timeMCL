@@ -4,4 +4,5 @@ compute_flops: False
 plot_forecasts: False
 params:
   num_hypotheses: 1
+  scaler_type: Null # ETS does not use scaler. It is here for compatibility with the rest of the code.
   
