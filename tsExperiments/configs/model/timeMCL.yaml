@@ -41,7 +41,7 @@ params:
   single_linear_layer: True
   backbone_deleted: True
   scaler_type: "mean"
-  div_by_std: False
+  div_by_std: True
   minimum_std: 1e-3
   minimum_std_cst: 1e-4
   default_scale: False

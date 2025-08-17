@@ -48,6 +48,7 @@ frozenlist==1.4.1
 fsspec==2024.6.1
 fvcore==0.1.5.post20221221
 gast==0.6.0
+gdown==5.2.0
 gitdb==4.0.11
 GitPython==3.1.43
 gluonts==0.15.1

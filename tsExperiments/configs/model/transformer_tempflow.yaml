@@ -28,7 +28,7 @@ params:
     weight_decay: 1e-8
     patience: 10
   scaler_type: "mean"
-  div_by_std: False
+  div_by_std: True
   minimum_std: 1e-3
   minimum_std_cst: 1e-4
   default_scale: False

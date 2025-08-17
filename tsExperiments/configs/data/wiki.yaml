@@ -2,6 +2,7 @@ num_batches_per_epoch: 20
 num_batches_val_per_epoch: 100
 batch_size: 64
 shuffle_buffer_length: Null
+discard_validation: false
 
 train:
   type: "Gluonts_ds"
